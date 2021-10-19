@@ -496,6 +496,8 @@ def obtain_guesses_by_inspection_qed(matrix, n_guesses, kind, n_guesses_doubles=
     guess_elec0 = np.zeros(len(guesses_elec))
     guess_phot0 = np.zeros(len(guesses_phot)) # using omega (actual diagonal 1st order) results in strange behaviour of davidson solver
     guesses_tmp = []
+    #guess_elec0[len(guess_elec0) - 2] = 0 # groundstate contribution is so small, it can be left out
+    guess_phot0[len(guess_phot0) - 1] = 5
     try:
         dummy_var = guesses_elec[0].pphh
         #print(dummy_var)
