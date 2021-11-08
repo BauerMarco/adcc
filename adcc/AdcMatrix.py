@@ -433,6 +433,7 @@ class AdcMatrix(AdcMatrixlike):
         assert "ph" in self.axis_blocks
         n_orbs_ph = [self.mospaces.n_orbs(sp) for sp in self.axis_spaces["ph"]]
         n_ph = np.prod(n_orbs_ph)
+        #print("n_orbs_ph", n_orbs_ph, "n_ph", n_ph, "*n_orbs_ph", *n_orbs_ph)
         assert len(basis["ph"]) == n_ph
         view_ss = out[:n_ph, :n_ph].reshape(*n_orbs_ph, *n_orbs_ph)
         for i in range(n_orbs_ph[0]):
@@ -440,6 +441,7 @@ class AdcMatrix(AdcMatrixlike):
                 ampl = ampl_zero.copy()
                 ampl.ph[i, a] = 1
                 view_ss[:, :, i, a] = (self @ ampl).ph.to_ndarray()
+                #print(view_ss[:, :, i, a])
 
         # Extract singles-doubles and doubles-doubles block
         if "pphh" in self.axis_blocks:

@@ -27,7 +27,7 @@ import scipy.linalg as la
 import scipy.sparse.linalg as sla
 
 from adcc import evaluate, lincomb
-from adcc.AdcMatrix import AdcMatrixlike
+from adcc.AdcMatrix import AdcMatrixlike, AdcMatrix
 from adcc.AmplitudeVector import AmplitudeVector
 
 from .common import select_eigenpairs
@@ -41,6 +41,11 @@ class DavidsonState(EigenSolverStateBase):
         super().__init__(matrix)
         self.residuals = None                   # Current residuals
         self.subspace_vectors = guesses.copy()  # Current subspace vectors
+        #guess_vecs = np.linalg.eigh(matrix.to_ndarray())[1]
+        #print(len(guess_vecs))
+        #print(guess_vecs[0].reshape((10, 2)))
+        #print(guesses[0].items())
+        #test = guesses[0].zeros_like().set_from_ndarray()#guess_vecs[0].reshape((10, 2)))
         self.algorithm = "davidson"
 
 
@@ -148,6 +153,8 @@ def davidson_iterations(matrix, state, max_subspace, max_iter, n_ep,
     eps = np.finfo(float).eps
     if residual_min_norm is None:
         residual_min_norm = 2 * n_problem * eps
+        #matr = matrix.to_ndarray()
+        #np.save("/home/marco/matr_adc1", matr)
 
     callback(state, "start")
     state.timer.restart("iteration")
@@ -162,6 +169,7 @@ def davidson_iterations(matrix, state, max_subspace, max_iter, n_ep,
 
         assert len(SS) >= n_block
         assert len(SS) <= max_subspace
+        #print("len(SS)", len(SS), "max_subspace", max_subspace)
 
         # Project A onto the subspace, keeping in mind
         # that the values Ass[:-n_block, :-n_block] are already valid,
@@ -176,6 +184,7 @@ def davidson_iterations(matrix, state, max_subspace, max_iter, n_ep,
         # and the associated ritz vector as well as residual
         with state.timer.record("rayleigh_ritz"):
             if Ass.shape == (n_block, n_block):
+                #print(Ass)
                 rvals, rvecs = la.eigh(Ass)  # Do a full diagonalisation
             else:
                 # TODO Maybe play with precision a little here
@@ -208,12 +217,26 @@ def davidson_iterations(matrix, state, max_subspace, max_iter, n_ep,
 
         callback(state, "next_iter")
         state.timer.restart("iteration")
+        # Here we extend the subspace to the maximum, which is the full matrix space
         if is_converged(state):
+            # In order to obtain all eigenvalues and -vectors, we need to remove the mask
+            #state.eigenvectors = [lincomb(v, SS, evaluate=True)
+            #                      for v in np.transpose(rvecs)]
             # Build the eigenvectors we desire from the subspace vectors:
             state.eigenvectors = [lincomb(v, SS, evaluate=True)
                                   for i, v in enumerate(np.transpose(rvecs))
                                   if i in epair_mask]
-
+            """
+            print("after davidson is converged we overwrite the solution with the fully diagonalized solution ... I know, I know ...inefficient and so on")
+            matr = matrix.to_ndarray()
+            state.eigenvalues, eigenvectors = np.linalg.eigh(matr)
+            state.eigenvectors = np.zeros(len(state.eigenvalues))
+            state.eigenvectors = [state.eigenvectors[i] + state.residuals[0].zeros_like() for i in np.arange(len(state.eigenvalues))]
+            state.eigenvectors = [state.eigenvectors[i] + eigenvectors[i] for i in np.arange(len(state.eigenvalues))] 
+            state.residuals = np.zeros(state.eigenvalues.shape)
+            state.residual_norms = state.residuals
+            """
+            #print(state.eigenvalues, len(state.eigenvectors))
             state.converged = True
             callback(state, "is_converged")
             state.timer.stop("iteration")

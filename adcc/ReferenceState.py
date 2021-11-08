@@ -209,6 +209,7 @@ class ReferenceState(libadcc.ReferenceState):
         if hasattr(self, "coupling"):
             from . import block as b
             from .functions import einsum
+            print("mospaces", self.mospaces)
             total_dip = OneParticleOperator(self.mospaces, is_symmetric=True)
             omega = ReferenceState.get_qed_omega(self)
             total_dip.oo = ReferenceState.get_qed_total_dip(self, b.oo)

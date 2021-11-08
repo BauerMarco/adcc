@@ -23,11 +23,14 @@
 import warnings
 import numpy as np
 
-from .misc import cached_property
+from .misc import cached_member_function, cached_property
 from .timings import Timer, timed_member_call
 from .visualisation import ExcitationSpectrum
-from .OneParticleOperator import product_trace
+from .OneParticleOperator import OneParticleOperator, product_trace
 from .AdcMethod import AdcMethod
+from adcc.functions import direct_sum, einsum, zeros_like, ones_like, empty_like
+from .MoSpaces import MoSpaces
+from .ReferenceState import ReferenceState
 
 from scipy import constants
 from matplotlib import pyplot as plt
@@ -168,6 +171,18 @@ class ElectronicTransition:
 
     @cached_property
     @mark_excitation_property()
+    #@timed_member_call(timer="_property_timer")
+    def diff_dipole_moment(self):
+        """List of diff_dipole moments of all computed states"""
+        dipole_integrals = self.operators.electric_dipole
+        print(self.state_diffdm)
+        return np.array([
+            [product_trace(comp, ddm) for comp in dipole_integrals]
+            for ddm in self.state_diffdm
+        ])
+
+    @cached_property
+    @mark_excitation_property()
     @timed_member_call(timer="_property_timer")
     def transition_dipole_moment_velocity(self):
         """List of transition dipole moments in the
@@ -200,9 +215,45 @@ class ElectronicTransition:
     def oscillator_strength(self):
         """List of oscillator strengths of all computed states"""
         print("energies =", self.excitation_energy.tolist())
+        #print("eigenvectors =", self.excitation_vector[0].ph.to_ndarray())# for vec in self.excitation_vector])
         print("tdms =", self.transition_dipole_moment.tolist())
-        print("transition_dm", self.transition_dm.evaluate())
-        print("dipole integrals", self.operators.electric_dipole.evaluate())
+        #print("transition_dm", [trans_dm.to_ndarray().shape for trans_dm in self.transition_dm])
+        #print("dipole integrals", [el_dip.oo.to_ndarray().shape for el_dip in self.operators.electric_dipole])
+        #print("state_diffdm", [val.blocks for val in self.state_diffdm])#[diffdm.evaluate() for diffdm in self.state_diffdm])
+        #print("state_diffdm has oo and vv ?", self.state_diffdm.oo, self.state_diffdm.vv)
+        diff_dip = OneParticleOperator(self.reference_state.mospaces, is_symmetric=True)
+        off_diag_block = np.empty([len(self.excitation_vector), 3, *diff_dip.ov.to_ndarray().shape])
+        for i, vec in enumerate(self.excitation_vector):
+            for j, el_dip in enumerate(self.operators.electric_dipole):
+                diff_dip.oo = self.state_diffdm[i].oo * el_dip.oo
+                diff_dip.vv = self.state_diffdm[i].vv * el_dip.vv
+                diff_dip.ov = einsum("ab,ib->ia", diff_dip.vv, vec.ph) - einsum("ij,ja->ia", diff_dip.oo, vec.ph)
+                off_diag_block[i][j] = diff_dip.ov.to_ndarray()
+        print(off_diag_block[0])
+        #np.save("/home/marco/off_diag_block_adc1", off_diag_block)
+        #print(diff_dip.ov.to_ndarray())
+        #np_vec = self.excitation_vector[0].ph.to_ndarray()
+        #ampl_vec = ones_like(self.excitation_vector[0].ph)
+        #print(ampl_vec[0])
+        #print(self.excitation_vector[0].ph)
+        #print(self.excitation_vector[0].values())
+        #diff_dip_ij = zeros_like(self.transition_dm[0].oo)
+        #diff_dip_ij.oo = self.transition_dm[0].oo * self.operators.electric_dipole[0].oo
+        #diff_dip_ab = zeros_like(self.transition_dm[0].vv)
+        #diff_dip_ab.vv = self.transition_dm[0].vv * self.operators.electric_dipole[0].vv
+        #diff_dip_ia = zeros_like(self.excitation_vector)
+        #diff_dip_ia.ov = einsum("ab,ib->ia", diff_dip_ab.vv, self.excitation_vector[0].ov) - einsum("ij,ja->ia", diff_dip_ij.oo, self.excitation_vector[0].ov)
+        #print("diff_dip_ia", diff_dip_ia.ov.to_ndarray())
+        #print(product_trace(self.state_diffdm[0], self.operators.electric_dipole[0]))
+        #check = self.state_diffdm[0].oo.dot(self.operators.electric_dipole[0].oo)
+        #check += self.state_diffdm[0].vv.dot(self.operators.electric_dipole[0].vv)
+        #print(check)
+        #trans_with_dip = self.transition_dm[0].ov.dot(self.operators.electric_dipole[0].ov) #einsum("ia,ia->ia", self.transition_dm[0].ov, self.operators.electric_dipole[0].ov)
+        #trans_with_dip += self.transition_dm[0].vo.dot(self.operators.electric_dipole[0].ov.transpose())
+        #print(trans_with_dip)
+        #print(self.transition_dm[0].blocks, self.operators.electric_dipole[0].blocks)
+        #print(self.state_diffdm[0].is_symmetric)
+        #print("hopefully equal to tmd", np.sum(trans_with_dip.to_ndarray()) )#einsum("ia,ia->", trans_with_dip, ones_like(trans_with_dip)))
         return 2. / 3. * np.array([
             np.linalg.norm(tdm)**2 * np.abs(ev)
             for tdm, ev in zip(self.transition_dipole_moment,
