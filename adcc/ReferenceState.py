@@ -198,6 +198,11 @@ class ReferenceState(libadcc.ReferenceState):
             return total_dip[block]
 
     @cached_member_function
+    def get_qed_params(self):
+        if hasattr(self, "coupling"):
+            return self.coupling, self.frequency
+
+    @cached_member_function
     def get_qed_omega(self):
         if hasattr(self, "coupling"):
             freqs = self.frequency

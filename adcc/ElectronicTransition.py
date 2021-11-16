@@ -29,6 +29,7 @@ from .visualisation import ExcitationSpectrum
 from .OneParticleOperator import OneParticleOperator, product_trace
 from .AdcMethod import AdcMethod
 from adcc.functions import direct_sum, einsum, zeros_like, ones_like, empty_like
+from adcc.adc_pp.state2state_transition_dm import state2state_transition_dm
 from .MoSpaces import MoSpaces
 from .ReferenceState import ReferenceState
 
@@ -221,7 +222,93 @@ class ElectronicTransition:
         #print("dipole integrals", [el_dip.oo.to_ndarray().shape for el_dip in self.operators.electric_dipole])
         #print("state_diffdm", [val.blocks for val in self.state_diffdm])#[diffdm.evaluate() for diffdm in self.state_diffdm])
         #print("state_diffdm has oo and vv ?", self.state_diffdm.oo, self.state_diffdm.vv)
+
+        #def s2s(state_i, state_f, space):
+        #    if space == "ov":
+        #        return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[state_i], self.excitation_vector[state_f]).ov
+        #    elif space == "oo":
+        #        return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[state_i], self.excitation_vector[state_f]).oo
+        #    elif space == "vv":
+        #        return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[state_i], self.excitation_vector[state_f]).vv
+        #    else:
+        #        raise AttributeError("OneParticle operator object has no attribute {f}", space)
+
+        def s2s(i, f):
+            return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[i], self.excitation_vector[f])
+
+        #print("s2s", s2s(0, 1, "oo"))
+        #print("s2s", s2s(1, 0, "oo"))
+
+        total_dip = OneParticleOperator(self.reference_state.mospaces, is_symmetric=True)
+        from . import block as b
+        total_dip.oo = ReferenceState.get_qed_total_dip(self.reference_state, b.oo)
+        total_dip.vv = ReferenceState.get_qed_total_dip(self.reference_state, b.vv)
+        total_dip.ov = ReferenceState.get_qed_total_dip(self.reference_state, b.ov)
+
+        off_diag_block = np.empty((len(self.excitation_energy), len(self.excitation_energy)))
+
+
+        dip0 = 0
+        qed_coupls, qed_freqs = ReferenceState.get_qed_params(self.reference_state)
+        print("Warning: The groundstate dipole moment is calculated at the mp1 level")
+        for coupling, freq, dip in zip(qed_coupls, qed_freqs, self.ground_state.dipole_moment(1)):
+            dip0 += coupling * np.sqrt(2 * freq) * dip
+        
+
+        for i in np.arange(len(self.excitation_energy)):
+            for j in np.arange(len(self.excitation_energy)):
+                if i == j:
+                    off_diag_block[i, j] = dip0 - product_trace(total_dip, s2s(i, j))
+                else:
+                    off_diag_block[i, j] = product_trace(total_dip, s2s(i, j))
+                
+
+        #print(off_diag_block)
+        print("Warning: The off_diag_block for the test is build like the state_dipole_moments, but I am unsure whether that is correct.")
+        np.save("/home/marco/off_diag_isr_basis", off_diag_block)
+
+        #print((self.ground_state.dipole_moment(1) * 0.05 - off_diag_block[0, 0]) * 20)
+
+        """
         diff_dip = OneParticleOperator(self.reference_state.mospaces, is_symmetric=True)
+        total_dip = OneParticleOperator(self.reference_state.mospaces, is_symmetric=True)
+        from . import block as b
+        total_dip.oo = ReferenceState.get_qed_total_dip(self.reference_state, b.oo)
+        total_dip.vv = ReferenceState.get_qed_total_dip(self.reference_state, b.vv)
+
+        d_oo = zeros_like(total_dip.oo)
+        d_vv = zeros_like(total_dip.vv)
+        d_oo.set_mask("ii", 1.0)
+        d_vv.set_mask("aa", 1.0)
+
+        ds_init = OneParticleOperator(self.reference_state.mospaces, is_symmetric=True) #Since there is no TwoParticleOperator we do this
+        ds = {
+            #b.oooo: einsum('ik,jl->ijkl', ds_init.oo, ds_init.oo),
+            #b.ooov: einsum('ik,ja->ijka', ds_init.oo, ds_init.ov),
+            #b.oovv: einsum('ia,jb->ijab', ds_init.ov, ds_init.ov),
+            #b.ovvv: einsum('ib,ac->iabc', ds_init.ov, ds_init.vv),
+            b.ovov: einsum('ij,ab->iajb', ds_init.oo, ds_init.vv),
+            #b.vvvv: einsum('ac,bd->abcd', ds_init.vv, ds_init.vv),
+        }
+
+        ds[b.ovov] = einsum("ij,ab->iajb", d_oo, total_dip.vv) - einsum("ij,ab->iajb", total_dip.oo, d_vv)
+
+        #print(ds[b.ovov])
+
+        np.save("/home/marco/diff_dens_dip_non_transformed", ds[b.ovov].to_ndarray())
+        np.save("/home/marco/diff_dens_dip_oo_non_transformed", einsum("ij,ab->iajb", total_dip.oo, d_vv).to_ndarray())
+        np.save("/home/marco/diff_dens_dip_vv_non_transformed", einsum("ij,ab->iajb", d_oo, total_dip.vv).to_ndarray())
+        np.save("/home/marco/eigvecs_adc1", [vec.ph.to_ndarray() for vec in self.excitation_vector])
+
+        diff_dips = {}
+
+        #for i in np.arange(len(self.excitation_vector)):
+        #    for j in np.arange(i + 1):
+        """
+                
+
+
+        """
         off_diag_block = np.empty([len(self.excitation_vector), 3, *diff_dip.ov.to_ndarray().shape])
         for i, vec in enumerate(self.excitation_vector):
             for j, el_dip in enumerate(self.operators.electric_dipole):
@@ -230,6 +317,7 @@ class ElectronicTransition:
                 diff_dip.ov = einsum("ab,ib->ia", diff_dip.vv, vec.ph) - einsum("ij,ja->ia", diff_dip.oo, vec.ph)
                 off_diag_block[i][j] = diff_dip.ov.to_ndarray()
         print(off_diag_block[0])
+        """
         #np.save("/home/marco/off_diag_block_adc1", off_diag_block)
         #print(diff_dip.ov.to_ndarray())
         #np_vec = self.excitation_vector[0].ph.to_ndarray()
