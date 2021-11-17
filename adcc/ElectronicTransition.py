@@ -262,6 +262,9 @@ class ElectronicTransition:
                 else:
                     off_diag_block[i, j] = product_trace(total_dip, s2s(i, j))
                 
+        #tdm_arr = np.empty(len(self.transition_dipole_moment))
+
+        #print([product_trace(total_dip, trans_dm) for trans_dm in self.transition_dm])
 
         #print(off_diag_block)
         print("Warning: The off_diag_block for the test is build like the state_dipole_moments, but I am unsure whether that is correct.")
