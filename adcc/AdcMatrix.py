@@ -750,6 +750,7 @@ class AdcMatrix(AdcMatrixlike):
 
         # Check for the cases actually implemented
         if any(b not in ("ph", "pphh") for b in self.axis_blocks):
+            print(self.axis_blocks)
             raise NotImplementedError("Blocks other than ph and pphh "
                                       "not implemented")
         if "ph" not in self.axis_blocks:

@@ -161,6 +161,7 @@ class ElectronicTransition:
             warnings.warn("ADC(0) transition dipole moments are known to be "
                           "faulty in some cases.")
         dipole_integrals = self.operators.electric_dipole
+        
         return np.array([
             [product_trace(comp, tdm) for comp in dipole_integrals]
             for tdm in self.transition_dm
