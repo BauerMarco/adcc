@@ -182,11 +182,14 @@ def davidson_iterations(matrix, state, max_subspace, max_iter, n_ep,
         # and the associated ritz vector as well as residual
         with state.timer.record("rayleigh_ritz"):
             if Ass.shape == (n_block, n_block):
+                print("la.eigh")
                 rvals, rvecs = la.eigh(Ass)  # Do a full diagonalisation
             else:
                 # TODO Maybe play with precision a little here
                 # TODO Maybe use previous vectors somehow
+                print("sla.eigsh")
                 v0 = None
+                print("davidson eigh", la.eigh(Ass)[0])
                 rvals, rvecs = sla.eigsh(Ass, k=n_block, which=which, v0=v0)
 
         with state.timer.record("residuals"):
@@ -228,6 +231,7 @@ def davidson_iterations(matrix, state, max_subspace, max_iter, n_ep,
             state.eigenvectors = [lincomb(v, SS, evaluate=True)
                                   for i, v in enumerate(np.transpose(rvecs))
                                   if i in epair_mask]
+            print("eig_vals from davidson", rvals)
 
             state.converged = True
             callback(state, "is_converged")
