@@ -248,19 +248,20 @@ class ElectronicTransition:
         off_diag_block = np.empty((len(self.excitation_energy), len(self.excitation_energy)))
 
 
-        dip0 = 0
-        qed_coupls, qed_freqs = ReferenceState.get_qed_params(self.reference_state)
+        #dip0 = 0
+        #qed_coupls, qed_freqs = ReferenceState.get_qed_params(self.reference_state)
         print("Warning: The groundstate dipole moment is calculated at the mp1 level")
-        for coupling, freq, dip in zip(qed_coupls, qed_freqs, self.ground_state.dipole_moment(1)):
-            dip0 += coupling * np.sqrt(2 * freq) * dip
+        #for coupling, freq, dip in zip(qed_coupls, qed_freqs, self.ground_state.dipole_moment(1)):
+        #    dip0 += coupling * np.sqrt(2 * freq) * dip
         
 
         for i in np.arange(len(self.excitation_energy)):
             for j in np.arange(len(self.excitation_energy)):
-                if i == j:
-                    off_diag_block[i, j] = dip0 - product_trace(total_dip, s2s(i, j))
-                else:
-                    off_diag_block[i, j] = product_trace(total_dip, s2s(i, j))
+                off_diag_block[i, j] = product_trace(total_dip, s2s(i, j))
+                #if i == j:
+                #    off_diag_block[i, j] = dip0 - product_trace(total_dip, s2s(i, j))
+                #else:
+                #    off_diag_block[i, j] = product_trace(total_dip, s2s(i, j))
                 
         #tdm_arr = np.empty(len(self.transition_dipole_moment))
 
