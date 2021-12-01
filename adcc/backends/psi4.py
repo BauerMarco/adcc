@@ -29,6 +29,7 @@ import psi4
 
 from .EriBuilder import EriBuilder
 from ..exceptions import InvalidReference
+from ..ExcitedStates import EnergyCorrection
 
 #global qed_from_qed_hf_input
 #qed_from_qed_hf_input = False
@@ -58,6 +59,26 @@ class Psi4OperatorIntegralProvider:
     @cached_property
     def nabla(self):
         return [-1.0 * np.asarray(comp) for comp in self.mints.ao_nabla()]
+
+    @property
+    def pe_induction_elec(self):
+        if hasattr(self.wfn, "pe_state"):
+            def pe_induction_elec_ao(dm):
+                return self.wfn.pe_state.get_pe_contribution(
+                    psi4.core.Matrix.from_array(dm.to_ndarray()),
+                    elec_only=True
+                )[1]
+            return pe_induction_elec_ao
+
+    @property
+    def pcm_potential_elec(self):
+        if self.wfn.PCM_enabled():
+            def pcm_potential_elec_ao(dm):
+                return psi4.core.PCM.compute_V(
+                    self.wfn.get_PCM(),
+                    psi4.core.Matrix.from_array(dm.to_ndarray())
+                )
+            return pcm_potential_elec_ao
 
 
 class Psi4EriBuilder(EriBuilder):
@@ -101,14 +122,43 @@ class Psi4HFProvider(HartreeFockProvider):
                                                         elec_only=elec_only)
         return e_pe
 
+    def pcm_energy(self, dm):
+        psi_dm = psi4.core.Matrix.from_array(dm.to_ndarray())
+        # computes the Fock matrix contribution
+        # By contraction with the tdm, the electronic contribution is obtained
+        V_pcm = psi4.core.PCM.compute_V(self.wfn.get_PCM(), psi_dm).to_array()
+        return np.einsum("uv,uv->", dm.to_ndarray(), V_pcm)
+
     @property
     def excitation_energy_corrections(self):
-        ret = {}
+        ret = []
+        if self.environment == "pe":
+            ptlr = EnergyCorrection(
+                "pe_ptlr_correction",
+                lambda view: 2.0 * self.pe_energy(view.transition_dm_ao,
+                                                  elec_only=True)
+            )
+            ptss = EnergyCorrection(
+                "pe_ptss_correction",
+                lambda view: self.pe_energy(view.state_diffdm_ao,
+                                            elec_only=True)
+            )
+            ret.extend([ptlr, ptss])
+        if self.environment == "pcm":
+            ptlr = EnergyCorrection(
+                "pcm_ptlr_correction",
+                lambda view: self.pcm_energy(view.transition_dm_ao)
+            )
+            ret.extend([ptlr])
+        return {ec.name: ec for ec in ret}
+
+    @property
+    def environment(self):
+        ret = None
         if hasattr(self.wfn, "pe_state"):
-            ret["pe_ptlr_correction"] = lambda view: \
-                2.0 * self.pe_energy(view.transition_dm_ao, elec_only=True)
-            ret["pe_ptss_correction"] = lambda view: \
-                self.pe_energy(view.state_diffdm_ao, elec_only=True)
+            ret = "pe"
+        elif self.wfn.PCM_enabled():
+            ret = "pcm"
         return ret
 
     def get_backend(self):
@@ -236,6 +286,8 @@ def run_hf(xyz, basis, charge=0, multiplicity=1, conv_tol=1e-11,
         "ccpvdz": "cc-pvdz",
     }
 
+    # needed for PE and PCM tests
+    psi4.core.clean_options()
     mol = psi4.geometry(f"""
         {charge} {multiplicity}
         {xyz}
@@ -255,7 +307,7 @@ def run_hf(xyz, basis, charge=0, multiplicity=1, conv_tol=1e-11,
         'reference': "RHF",
     })
     if pe_options:
-        psi4.set_options({"pe", "true"})
+        psi4.set_options({"pe": "true"})
         psi4.set_module_options("pe", {"potfile": pe_options["potfile"]})
 
     if multiplicity != 1:
