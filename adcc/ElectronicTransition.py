@@ -232,7 +232,7 @@ class ElectronicTransition:
         #        return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[state_i], self.excitation_vector[state_f]).vv
         #    else:
         #        raise AttributeError("OneParticle operator object has no attribute {f}", space)
-        """
+        
         def s2s(i, f):
             return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[i], self.excitation_vector[f])
 
@@ -272,8 +272,9 @@ class ElectronicTransition:
         #print([product_trace(total_dip, trans_dm) for trans_dm in self.transition_dm])
 
         #print(off_diag_block)
-        np.save("/home/marco/off_diag_isr_basis", off_diag_block)
-        """
+        #np.save("/home/marco/off_diag_isr_basis", off_diag_block)
+        print("off_diag_block = ", list(off_diag_block))
+        
         #print((self.ground_state.dipole_moment(1) * 0.05 - off_diag_block[0, 0]) * 20)
 
         """
