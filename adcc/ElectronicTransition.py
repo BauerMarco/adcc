@@ -249,8 +249,8 @@ class ElectronicTransition:
         #off_diag_block = np.array([[[product_trace(comp, s2s(i, f)) for comp in self.operators.electric_dipole]
         #                            for i in np.arange(len(self.excitation_energy))]
         #                            for f in np.arange(len(self.excitation_energy))])
-        ovov = ReferenceState.qed_D_object(self.reference_state, b.ovov)
-        np.save("/home/marco/D_ovov", ovov.to_ndarray())
+        #ovov = ReferenceState.qed_D_object(self.reference_state, b.ovov)
+        #np.save("/home/marco/D_ovov", ovov.to_ndarray())
 
         #dip0 = 0
         #qed_coupls, qed_freqs = ReferenceState.get_qed_params(self.reference_state)
