@@ -47,6 +47,10 @@ class LazyMp:
         self.mospaces = hf.mospaces
         self.timer = Timer()
         self.has_core_occupied_space = hf.has_core_occupied_space
+        #for qed mp2
+        self.get_qed_total_dip = OneParticleOperator(self.mospaces, is_symmetric=True)
+        #self.get_qed_total_dip.ov = hf.get_qed_total_dip(b.ov)
+        #self.get_qed_omega = hf.get_qed_omega
 
     def __getattr__(self, attr):
         # Shortcut some quantities, which are needed most often
@@ -118,6 +122,17 @@ class LazyMp:
         contraction_str, eri_block = expressions[key]
         return einsum(contraction_str, self.t2oo, hf.eri(eri_block))
 
+    @cached_member_function
+    def qed_t1(self, space):
+        """ Return new electronic singly excited amplitude in the first order correction to the wavefunction for qed for N=1 """
+        if space != b.ov:
+            raise NotImplementedError("qed_t1 term not implemented "
+                                      f"for space {space}.")
+        #total_dip = OneParticleOperator(self.mospaces, is_symmetric=True)
+        #total_dip.ov = self.get_qed_total_dip.ov
+        hf = self.reference_state
+        return hf.get_qed_total_dip(b.ov) / self.df(b.ov)
+
     @cached_property
     @timed_member_call(timer="timer")
     def mp2_diffdm(self):
@@ -126,14 +141,21 @@ class LazyMp:
         """
         hf = self.reference_state
         ret = OneParticleOperator(self.mospaces, is_symmetric=True)
+        omega = ReferenceState.get_qed_omega(hf)
         # NOTE: the following 3 blocks are equivalent to the cvs_p0 intermediates
         # defined at the end of this file
-        ret.oo = -0.5 * einsum("ikab,jkab->ij", self.t2oo, self.t2oo)
+        # the following terms including omega originate from the qed correction
+        print("mp2 diffdm has been adapted to qed")
+        ret.oo = -0.5 * (einsum("ikab,jkab->ij", self.t2oo, self.t2oo)
+                        + einsum("ia,ja->ij", self.qed_t1(b.ov), self.qed_t1(b.ov)) * omega)
         ret.ov = -0.5 * (
             + einsum("ijbc,jabc->ia", self.t2oo, hf.ovvv)
             + einsum("jkib,jkab->ia", hf.ooov, self.t2oo)
+            - (einsum("ib,ab->ia", self.qed_t1(b.ov), hf.get_qed_total_dip(b.vv))
+                - einsum("ji,ja->ia", hf.get_qed_total_dip(b.oo), self.qed_t1(b.ov))) * omega
         ) / self.df(b.ov)
-        ret.vv = 0.5 * einsum("ijac,ijbc->ab", self.t2oo, self.t2oo)
+        ret.vv = 0.5 * (einsum("ijac,ijbc->ab", self.t2oo, self.t2oo)
+                        + einsum("ia,ib->ab", self.qed_t1(b.ov), self.qed_t1(b.ov)) * omega)
 
         if self.has_core_occupied_space:
             # additional terms to "revert" CVS for ground state density
@@ -207,6 +229,13 @@ class LazyMp:
         is_cvs = self.has_core_occupied_space
         if level == 2 and not is_cvs:
             terms = [(1.0, hf.oovv, self.t2oo)]
+            total_dip = OneParticleOperator(self.mospaces, is_symmetric=True)
+            omega, total_dip.ov = ReferenceState.get_qed_omega(hf), self.get_qed_total_dip(b.ov)
+            qed_terms = [(omega/2, total_dip.ov, self.qed_t1(b.ov))]
+            qed_mp2_correction = sum(
+                -pref * lambda_dip.dot(qed_t)
+                for pref, lambda_dip, qed_t in qed_terms
+            )
         elif level == 2 and is_cvs:
             terms = [(1.0, hf.oovv, self.t2oo),
                      (2.0, hf.ocvv, self.t2oc),
@@ -218,7 +247,7 @@ class LazyMp:
         return sum(
             -0.25 * pref * eri.dot(t2)
             for pref, eri, t2 in terms
-        )
+        ) + qed_mp2_correction
 
     def energy(self, level=2):
         """

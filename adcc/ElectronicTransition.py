@@ -176,11 +176,24 @@ class ElectronicTransition:
     def diff_dipole_moment(self):
         """List of diff_dipole moments of all computed states"""
         dipole_integrals = self.operators.electric_dipole
-        print(self.state_diffdm)
-        return np.array([
-            [product_trace(comp, ddm) for comp in dipole_integrals]
-            for ddm in self.state_diffdm
-        ])
+        print("the diff_dm block is calculated for adc(0)")
+        print("note, that only the z coordinate of the dipole integrals is calculated")
+        print(self.method)
+        n_states = len(self.excitation_energy)
+        #print(self.state_diffdm)
+        def s2s(i, f):
+            return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[i], self.excitation_vector[f])
+
+        off_diag_block = np.empty((n_states, n_states))
+        for i in np.arange(n_states):
+            for j in np.arange(n_states): # this is a symmetric property, but since we look at small examples this is fine
+                off_diag_block[i, j] = product_trace(dipole_integrals[2], s2s(i, j))
+
+        return off_diag_block
+        #return np.array([
+        #    [product_trace(comp, ddm) for comp in dipole_integrals]
+        #    for ddm in self.state_diffdm
+        #])
 
     @cached_property
     @mark_excitation_property()
@@ -215,9 +228,9 @@ class ElectronicTransition:
     @mark_excitation_property()
     def oscillator_strength(self):
         """List of oscillator strengths of all computed states"""
-        print("energies =", self.excitation_energy.tolist())
+        #print("energies =", self.excitation_energy.tolist())
         #print("eigenvectors =", self.excitation_vector[0].ph.to_ndarray())# for vec in self.excitation_vector])
-        print("tdms =", self.transition_dipole_moment.tolist())
+        #print("tdms =", self.transition_dipole_moment.tolist())
         #print("transition_dm", [trans_dm.to_ndarray().shape for trans_dm in self.transition_dm])
         #print("dipole integrals", [el_dip.oo.to_ndarray().shape for el_dip in self.operators.electric_dipole])
         #print("state_diffdm", [val.blocks for val in self.state_diffdm])#[diffdm.evaluate() for diffdm in self.state_diffdm])
@@ -232,7 +245,7 @@ class ElectronicTransition:
         #        return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[state_i], self.excitation_vector[state_f]).vv
         #    else:
         #        raise AttributeError("OneParticle operator object has no attribute {f}", space)
-        
+        """
         def s2s(i, f):
             return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[i], self.excitation_vector[f])
 
@@ -276,6 +289,9 @@ class ElectronicTransition:
         print("off_diag_block = ", list(off_diag_block))
         
         #print((self.ground_state.dipole_moment(1) * 0.05 - off_diag_block[0, 0]) * 20)
+        """
+
+
 
         """
         diff_dip = OneParticleOperator(self.reference_state.mospaces, is_symmetric=True)

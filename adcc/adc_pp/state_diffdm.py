@@ -45,6 +45,27 @@ def diffdm_adc0(mp, amplitude, intermediates):
     return dm
 
 
+def diffdm_adc1_qed_diag_part(mp, amplitude, intermediates): 
+    # this is necessary for qed-adc(2) test (this is the diagonal part, but not only the dipole part, but the part, that remains after all cancellations)
+    dm = diffdm_adc0(mp, amplitude, intermediates)
+    # first we test, whether it works if we cancel everything already in here (even though there are 3 terms, and one with H_0)
+    # this should still be symmetric
+    u1 = amplitude.ph
+    p0_oo = dm.oo.evaluate()
+    p0_vv = dm.vv.evaluate()
+
+    print("care, that diffdm_adc1_qed_diag_part still misses the sqrt(omega/2) factor")
+
+    # first term gets canceled by E^(2)_0 to half, and then H_0 term cancels half of the contributions (see return)
+    dm.ov = (#mp.qed_t1(b.ov) * u1.dot(u1) #this would usually be 1, but we use the ADC(2) vector in this case, so this is usually a little smaller than 1
+            - einsum("kb,ab->ka", mp.qed_t1(b.ov), p0_vv) #- einsum("ia,kb,ib->ka", u1, mp.qed_t1(b.ov), u1)
+            + einsum("ij,ic->jc", p0_oo, mp.qed_t1(b.ov)) #- einsum("ia,ic,ja->jc", u1, mp.qed_t1(b.ov), u1)
+            + u1.dot(mp.qed_t1(b.ov)) * u1
+    ) / 2 # since H_0 terms cancel half of the contributions above (fully canceling the first term)
+    return dm
+
+
+
 def diffdm_adc2(mp, amplitude, intermediates):
     dm = diffdm_adc0(mp, amplitude, intermediates)  # Get ADC(1) result
     check_doubles_amplitudes([b.o, b.o, b.v, b.v], amplitude)
