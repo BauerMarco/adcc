@@ -106,7 +106,9 @@ class IndexSpinSymmetrisation(IndexSymmetrisation):
             # Only work on the doubles part
             # the other blocks are not yet implemented
             # or nothing needs to be done ("ph" block)
-            if "pphh" in vec.blocks_ph:
+            #if "pphh" in vec.blocks_ph:
+            if "pphh" in vec.elec.blocks_ph:
+                raise NotImplementedError("this is the qed_adc1 branch, so pphh stuff is not adapted")
                 # TODO: Note that the "d" is needed here because the C++ side
                 #       does not yet understand ph and pphh
                 amplitude_vector_enforce_spin_kind(
