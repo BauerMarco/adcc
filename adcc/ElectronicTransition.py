@@ -173,10 +173,9 @@ class ElectronicTransition:
     @cached_property
     @mark_excitation_property()
     #@timed_member_call(timer="_property_timer")
-    def diff_dipole_moment(self):
+    def s2s_dipole_moment(self):
         """List of diff_dipole moments of all computed states"""
         dipole_integrals = self.operators.electric_dipole
-        print("the diff_dm block is calculated for adc(0)")
         print("note, that only the z coordinate of the dipole integrals is calculated")
         print(self.method)
         n_states = len(self.excitation_energy)

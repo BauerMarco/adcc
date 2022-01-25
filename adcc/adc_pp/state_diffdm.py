@@ -156,7 +156,7 @@ def diffdm_cvs_adc2(mp, amplitude, intermediates):
 DISPATCH = {
     "adc0": diffdm_adc0,
     "adc1": diffdm_adc0,       # same as ADC(0)
-    "adc2": diffdm_adc2,
+    "adc2": diffdm_adc1_qed_diag_part,
     "adc2x": diffdm_adc2,
     "cvs-adc0": diffdm_adc0,
     "cvs-adc1": diffdm_adc0,   # same as ADC(0)

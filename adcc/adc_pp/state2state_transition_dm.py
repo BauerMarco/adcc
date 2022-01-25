@@ -42,6 +42,37 @@ def s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates):
     return dm
 
 
+def s2s_tdm_adc1_qed_diag_part(mp, amplitude_l, amplitude_r, intermediates): 
+    print("care, instead of usual adc2 s2s_tdm here s2s_tdm qed_adc1 diag part is used")
+    # this is necessary for qed-adc(2) test (this is the diagonal part, but not only the dipole part, but the part, that remains after all cancellations)
+    dm = s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates)
+    # first we test, whether it works if we cancel everything already in here (even though there are 3 terms, and one with H_0)
+    # this should still be symmetric
+    ul1 = amplitude_l.ph
+    ur1 = amplitude_r.ph
+    p0_oo = dm.oo.evaluate()
+    p0_vv = dm.vv.evaluate()
+
+    dm_new = OneParticleOperator(mp, is_symmetric=False)
+
+    print("care, that s2s_tdm_adc1_qed_diag_part still misses the sqrt(omega/2) factor")
+
+    # first term gets canceled by E^(2)_0 to half, and then H_0 term cancels half of the contributions (see return)
+    dm_new.ov = (#mp.qed_t1(b.ov) * u1.dot(u1) #this would usually be 1, but we use the ADC(2) vector in this case, so this is usually a little smaller than 1
+            - einsum("kb,ab->ka", mp.qed_t1(b.ov), p0_vv) #- einsum("ia,kb,ib->ka", u1, mp.qed_t1(b.ov), u1)
+            + einsum("ji,ic->jc", p0_oo, mp.qed_t1(b.ov)) #- einsum("ia,ic,ja->jc", u1, mp.qed_t1(b.ov), u1)
+            + ul1.dot(mp.qed_t1(b.ov)) * ur1
+    ) / 2 # since H_0 terms cancel half of the contributions above (fully canceling the first term)
+
+    dm_new.vo = (#mp.qed_t1(b.ov) * u1.dot(u1) #this would usually be 1, but we use the ADC(2) vector in this case, so this is usually a little smaller than 1
+            - einsum("kb,ba->ak", mp.qed_t1(b.ov), p0_vv) #- einsum("ia,kb,ib->ka", u1, mp.qed_t1(b.ov), u1)
+            + einsum("ij,ic->cj", p0_oo, mp.qed_t1(b.ov)) #- einsum("ia,ic,ja->jc", u1, mp.qed_t1(b.ov), u1)
+            + ur1.dot(mp.qed_t1(b.ov)) * einsum("ia->ai", ul1)
+    ) / 2 # since H_0 terms cancel half of the contributions above (fully canceling the first term)
+
+    return dm_new
+
+
 def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
     check_doubles_amplitudes([b.o, b.o, b.v, b.v], amplitude_l, amplitude_r)
     dm = s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates)
@@ -104,7 +135,7 @@ def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
 # Ref: https://doi.org/10.1080/00268976.2013.859313
 DISPATCH = {"adc0": s2s_tdm_adc0,
             "adc1": s2s_tdm_adc0,       # same as ADC(0)
-            "adc2": s2s_tdm_adc2,
+            "adc2": s2s_tdm_adc1_qed_diag_part,
             "adc2x": s2s_tdm_adc2,      # same as ADC(2)
             }
 
