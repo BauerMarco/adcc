@@ -20,6 +20,7 @@
 ## along with adcc. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
+from unicodedata import name
 import warnings
 import numpy as np
 
@@ -173,22 +174,67 @@ class ElectronicTransition:
     @cached_property
     @mark_excitation_property()
     #@timed_member_call(timer="_property_timer")
-    def s2s_dipole_moment(self):
+    def transition_dipole_moments_qed(self):
+        """List of transition dipole moments of all computed states"""
+        if self.property_method.level == 0:
+            warnings.warn("ADC(0) transition dipole moments are known to be "
+                          "faulty in some cases.")
+        dipole_integrals = self.operators.electric_dipole
+        print("this is the property level", self.property_method.level)
+        self.ground_state.tdm_contribution = "adc" + str(self.property_method.level)
+        return np.array([
+            [product_trace(comp, tdm) for comp in dipole_integrals]
+            for tdm in self.transition_dm
+        ])
+
+    @cached_property
+    @mark_excitation_property()
+    #@timed_member_call(timer="_property_timer")
+    def s2s_dipole_moments_qed(self):
         """List of diff_dipole moments of all computed states"""
         dipole_integrals = self.operators.electric_dipole
         print("note, that only the z coordinate of the dipole integrals is calculated")
-        print(self.method)
         n_states = len(self.excitation_energy)
         #print(self.state_diffdm)
-        def s2s(i, f):
+        def s2s(i, f, s2s_contribution):
+            self.ground_state.s2s_contribution = s2s_contribution
             return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[i], self.excitation_vector[f])
 
-        off_diag_block = np.empty((n_states, n_states))
+        block_dict = {}
+        block = np.empty((n_states, n_states))
         for i in np.arange(n_states):
-            for j in np.arange(n_states): # this is a symmetric property, but since we look at small examples this is fine
-                off_diag_block[i, j] = product_trace(dipole_integrals[2], s2s(i, j))
+            for j in np.arange(n_states):
+                block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "adc0"))
 
-        return off_diag_block
+        block_dict["qed_adc1_off_diag"] = block
+
+        if self.method.name == "adc2" and hasattr(self.reference_state, "second_order_coupling"):
+            print("second order coupling is calculated as well")
+            for i in np.arange(n_states):
+                for j in np.arange(n_states): 
+                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_diag"))
+            
+            block_dict["qed_adc2_diag"] = block
+
+            for i in np.arange(n_states):
+                for j in np.arange(n_states):
+                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_edge"))
+            
+            block_dict["qed_adc2_edge"] = block
+
+            for i in np.arange(n_states):
+                for j in np.arange(n_states): 
+                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_ph_pphh"))
+            
+            block_dict["qed_adc2_ph_pphh"] = block
+
+            for i in np.arange(n_states):
+                for j in np.arange(n_states): 
+                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_pphh_ph"))
+            
+            block_dict["qed_adc2_pphh_ph"] = block
+
+        return block_dict
         #return np.array([
         #    [product_trace(comp, ddm) for comp in dipole_integrals]
         #    for ddm in self.state_diffdm
