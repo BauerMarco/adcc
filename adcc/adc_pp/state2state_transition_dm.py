@@ -71,9 +71,7 @@ def s2s_tdm_qed_adc2_diag_part(mp, amplitude_l, amplitude_r, intermediates):
 
 
 def s2s_tdm_qed_adc2_edge_part(mp, amplitude_l, amplitude_r, intermediates): 
-    # this is necessary for qed-adc(2) test (this is the diagonal part, but not only the dipole part, but the part, that remains after all cancellations)
     dm = s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates)
-    # first we test, whether it works if we cancel everything already in here (even though there are 3 terms, and one with H_0)
     # this should still be symmetric
     ul1 = amplitude_l.ph
     ur1 = amplitude_r.ph

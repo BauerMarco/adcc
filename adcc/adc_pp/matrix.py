@@ -273,7 +273,7 @@ def block_cvs_pphh_ph_1(hf, mp, intermediates):
 def block_ph_ph_2(hf, mp, intermediates):
     i1 = intermediates.adc2_i1
     i2 = intermediates.adc2_i2
-    """
+    
     omega = float(ReferenceState.get_qed_omega(hf))
     qed_i1 = intermediates.adc2_qed_i1
     qed_i2 = intermediates.adc2_qed_i2
@@ -287,12 +287,11 @@ def block_ph_ph_2(hf, mp, intermediates):
                     + (1/2) * 2 * einsum("ia,ia->ia", mp.qed_t1(b.ov), hf.get_qed_total_dip(b.ov)))
         ))
     else:
-    """
-    diagonal = AmplitudeVector(ph=(
-        + direct_sum("a-i->ia", i1.diagonal(), i2.diagonal())
-        - einsum("IaIa->Ia", hf.ovov)
-        - einsum("ikac,ikac->ia", mp.t2oo, hf.oovv)
-    ))
+        diagonal = AmplitudeVector(ph=(
+            + direct_sum("a-i->ia", i1.diagonal(), i2.diagonal())
+            - einsum("IaIa->Ia", hf.ovov)
+            - einsum("ikac,ikac->ia", mp.t2oo, hf.oovv)
+        ))
 
 
     # Not used anywhere else, so kept as an anonymous intermediate
@@ -301,7 +300,7 @@ def block_ph_ph_2(hf, mp, intermediates):
         + einsum("ijab,jkbc->ikac", hf.oovv, mp.t2oo)
     ).evaluate()
 
-    """
+    
     if hasattr(hf, "qed_in_matrix"):
         def apply(ampl):
             return AmplitudeVector(ph=(
@@ -316,14 +315,13 @@ def block_ph_ph_2(hf, mp, intermediates):
                                 + hf.get_qed_total_dip(b.ov) * mp.qed_t1(b.ov).dot(ampl.ph)))
             ))
     else:
-    """
-    def apply(ampl):
-        return AmplitudeVector(ph=(
-            + einsum("ib,ab->ia", ampl.ph, i1)
-            - einsum("ij,ja->ia", i2, ampl.ph)
-            - einsum("jaib,jb->ia", hf.ovov, ampl.ph)    # 1
-            - 0.5 * einsum("ikac,kc->ia", term_t2_eri, ampl.ph)  # 2
-        ))
+        def apply(ampl):
+            return AmplitudeVector(ph=(
+                + einsum("ib,ab->ia", ampl.ph, i1)
+                - einsum("ij,ja->ia", i2, ampl.ph)
+                - einsum("jaib,jb->ia", hf.ovov, ampl.ph)    # 1
+                - 0.5 * einsum("ikac,kc->ia", term_t2_eri, ampl.ph)  # 2
+            ))
     return AdcBlock(apply, diagonal)
 
 
@@ -437,7 +435,7 @@ def adc2_i2(hf, mp, intermediates):
     # This definition differs from libadc. It additionally has the hf.foo term.
     return hf.foo - 0.5 * einsum("ikab,jkab->ij", mp.t2oo, hf.oovv).symmetrise()
 
-"""
+
 # qed intermediates for adc2, without the factor of (omega/2), which is added in the actual matrix builder
 @register_as_intermediate
 def adc2_qed_i1(hf, mp, intermediates): # maybe do this with symmetrise
@@ -451,7 +449,7 @@ def adc2_qed_i2(hf, mp, intermediates): # maybe do this with symmetrise
     #return (1/2) * einsum("jc,ic->ij", mp.qed_t1_df(b.ov), mp.qed_t1_df(b.ov))
     return (1/2) * (einsum("jc,ic->ij", mp.qed_t1(b.ov), hf.get_qed_total_dip(b.ov)) 
                     + einsum("ic,jc->ij", mp.qed_t1(b.ov), hf.get_qed_total_dip(b.ov)))
-"""
+
 
 
 def adc3_i1(hf, mp, intermediates):
