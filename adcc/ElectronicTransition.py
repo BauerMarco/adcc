@@ -20,6 +20,7 @@
 ## along with adcc. If not, see <http://www.gnu.org/licenses/>.
 ##
 ## ---------------------------------------------------------------------
+import enum
 from unicodedata import name
 import warnings
 import numpy as np
@@ -31,6 +32,7 @@ from .OneParticleOperator import OneParticleOperator, product_trace
 from .AdcMethod import AdcMethod
 from adcc.functions import direct_sum, einsum, zeros_like, ones_like, empty_like
 from adcc.adc_pp.state2state_transition_dm import state2state_transition_dm
+from adcc.adc_pp.transition_dm import transition_dm
 from .MoSpaces import MoSpaces
 from .ReferenceState import ReferenceState
 
@@ -181,11 +183,37 @@ class ElectronicTransition:
                           "faulty in some cases.")
         dipole_integrals = self.operators.electric_dipole
         print("this is the property level", self.property_method.level)
-        self.ground_state.tdm_contribution = "adc" + str(self.property_method.level)
-        return np.array([
-            [product_trace(comp, tdm) for comp in dipole_integrals]
-            for tdm in self.transition_dm
-        ])
+        def tdm(i, prop_level):
+            self.ground_state.tdm_contribution = prop_level
+            return transition_dm(self.method, self.ground_state, self.excitation_vector[i])
+        if hasattr(self.reference_state, "first_order_coupling"):# and self.method.name == "adc2":
+            #self.ground_state.tdm_contribution = "adc0"
+
+            single_excitation_states = np.zeros(len(self.excitation_energy))
+
+            for i, vec in enumerate(self.excitation_vector):
+                singles_norm = vec.ph.dot(vec.ph)
+                if singles_norm >= 0.8:
+                    single_excitation_states[i] = 1
+
+            ret = np.zeros((len(self.excitation_energy), 3))
+            for i, vec in enumerate(self.excitation_vector):
+                if single_excitation_states[i] == 1:
+                    ret[i] = np.array([product_trace(comp, tdm(i, "adc0"))# * (vec.ph.dot(vec.ph))**(-1))
+                                         for comp in dipole_integrals])
+                #else:
+                #    ret[i] = np.zeros(3)
+            return ret
+            #return np.array([
+            #    [product_trace(comp, tdm) for comp in dipole_integrals]
+            #    for tdm in self.transition_dm
+            #])
+        else:
+            prop_level = "adc" + str(self.property_method.level - 1)
+            return np.array([
+                [product_trace(comp, tdm(i, prop_level)) for comp in dipole_integrals]
+                for i in np.arange(len(self.excitation_energy))
+            ])
 
     @cached_property
     @mark_excitation_property()
@@ -198,13 +226,24 @@ class ElectronicTransition:
         #print(self.state_diffdm)
         def s2s(i, f, s2s_contribution):
             self.ground_state.s2s_contribution = s2s_contribution
-            return state2state_transition_dm(self.method, self.ground_state, self.excitation_vector[i], self.excitation_vector[f])
+            vec = self.excitation_vector
+            return state2state_transition_dm(self.method, self.ground_state, vec[i], vec[f])
 
         block_dict = {}
-        block = np.empty((n_states, n_states))
+        #block = np.zeros((n_states, n_states))
+        single_excitation_states = np.zeros(n_states)
+
+        for i, vec in enumerate(self.excitation_vector):
+            singles_norm = vec.ph.dot(vec.ph)
+            if singles_norm >= 0.8:
+                single_excitation_states[i] = 1
+
+        block = np.outer(single_excitation_states, single_excitation_states)
+
         for i in np.arange(n_states):
             for j in np.arange(n_states):
-                block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "adc0"))
+                if block[i, j] == 1:
+                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "adc1"))#"qed_adc1"))
 
         block_dict["qed_adc1_off_diag"] = block
 

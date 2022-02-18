@@ -30,6 +30,7 @@ from adcc.functions import direct_sum, einsum, zeros_like
 from adcc.Intermediates import Intermediates, register_as_intermediate
 from adcc.AmplitudeVector import AmplitudeVector
 from adcc.ReferenceState import ReferenceState
+from adcc.OneParticleOperator import OneParticleOperator
 
 __all__ = ["block"]
 
@@ -68,6 +69,7 @@ def block(ground_state, spaces, order, variant=None, intermediates=None):
     elif variant is None:
         variant = []
     reference_state = ground_state.reference_state
+
     if intermediates is None:
         intermediates = Intermediates(ground_state)
 
@@ -231,10 +233,11 @@ def block_cvs_pphh_pphh_1(hf, mp, intermediates):
 # 1st order coupling
 #
 def block_ph_pphh_1(hf, mp, intermediates):
+
     def apply(ampl):
         return AmplitudeVector(ph=(
             + einsum("jkib,jkab->ia", hf.ooov, ampl.pphh)
-            + einsum("ijbc,jabc->ia", ampl.pphh, hf.ovvv)
+            + einsum("ijbc,jabc->ia", ampl.pphh, hf.ovvv)# - hf.qed_D_object(b.ovvv))
         ))
     return AdcBlock(apply, 0)
 
@@ -286,6 +289,12 @@ def block_ph_ph_2(hf, mp, intermediates):
                     - direct_sum("a+i->ia", qed_i1.diagonal(), qed_i2.diagonal())
                     + (1/2) * 2 * einsum("ia,ia->ia", mp.qed_t1(b.ov), hf.get_qed_total_dip(b.ov)))
         ))
+    elif hasattr(hf, "first_order_coupling"):
+        diagonal = AmplitudeVector(ph=(
+            + direct_sum("a-i->ia", i1.diagonal(), i2.diagonal())
+            - einsum("IaIa->Ia", hf.ovov + hf.qed_D_object(b.ovov))
+            - einsum("ikac,ikac->ia", mp.t2oo, hf.oovv)
+        ))
     else:
         diagonal = AmplitudeVector(ph=(
             + direct_sum("a-i->ia", i1.diagonal(), i2.diagonal())
@@ -313,6 +322,14 @@ def block_ph_ph_2(hf, mp, intermediates):
                         - einsum("ij,ja->ia", qed_i2, ampl.ph)
                         + (1/2) * (mp.qed_t1(b.ov) * hf.get_qed_total_dip(b.ov).dot(ampl.ph) 
                                 + hf.get_qed_total_dip(b.ov) * mp.qed_t1(b.ov).dot(ampl.ph)))
+            ))
+    elif hasattr(hf, "first_order_coupling"):
+        def apply(ampl):
+            return AmplitudeVector(ph=(
+                + einsum("ib,ab->ia", ampl.ph, i1)
+                - einsum("ij,ja->ia", i2, ampl.ph)
+                - einsum("jaib,jb->ia", hf.ovov + hf.qed_D_object(b.ovov), ampl.ph)    # 1
+                - 0.5 * einsum("ikac,kc->ia", term_t2_eri, ampl.ph)  # 2
             ))
     else:
         def apply(ampl):

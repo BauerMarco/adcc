@@ -42,6 +42,20 @@ def s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates):
     return dm
 
 
+def s2s_tdm_adc1_qed(mp, amplitude_l, amplitude_r, intermediates):
+    check_singles_amplitudes([b.o, b.v], amplitude_l, amplitude_r)
+    ul1 = amplitude_l.ph
+    ur1 = amplitude_r.ph
+
+    ul1 = ul1 / (ul1.dot(ul1))
+    ur1 = ur1 / (ur1.dot(ur1))
+
+    dm = OneParticleOperator(mp, is_symmetric=False)
+    dm.oo = -einsum('ja,ia->ij', ul1, ur1)
+    dm.vv = einsum('ia,ib->ab', ul1, ur1)
+    return dm
+
+
 def s2s_tdm_qed_adc2_diag_part(mp, amplitude_l, amplitude_r, intermediates): 
     # this is necessary for qed-adc(2) test (this is the diagonal part, but not only the dipole part, but the part, that remains after all cancellations)
     dm = s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates)
@@ -180,6 +194,7 @@ def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
 # Ref: https://doi.org/10.1080/00268976.2013.859313
 DISPATCH = {"adc0": s2s_tdm_adc0,
             "adc1": s2s_tdm_adc0,       # same as ADC(0)
+            "qed_adc1": s2s_tdm_adc1_qed, # same as ADC(0), but with normalized .ph vector parts
             "qed_adc2_diag": s2s_tdm_qed_adc2_diag_part,
             "qed_adc2_edge": s2s_tdm_qed_adc2_edge_part,
             "qed_adc2_ph_pphh": s2s_tdm_qed_adc2_ph_pphh_coupl_part,

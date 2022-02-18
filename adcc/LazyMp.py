@@ -133,6 +133,18 @@ class LazyMp:
         hf = self.reference_state
         return hf.get_qed_total_dip(b.ov) / self.df(b.ov)
 
+    #@cached_member_function
+    #def qed_t2(self, space):
+    #    """T2 amplitudes"""
+    #    hf = self.reference_state
+    #    sp = split_spaces(space)
+    #    assert all(s == b.v for s in sp[2:])
+    #    eia = self.df(sp[0] + b.v)
+    #    ejb = self.df(sp[1] + b.v)
+    #    return (
+    #        hf.eri(space) + hf.qed_D_object(space) / direct_sum("ia+jb->ijab", eia, ejb).symmetrise((2, 3))
+    #    )
+
     @cached_property
     @timed_member_call(timer="timer")
     def mp2_diffdm(self):
