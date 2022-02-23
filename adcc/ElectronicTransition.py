@@ -31,6 +31,7 @@ from .visualisation import ExcitationSpectrum
 from .OneParticleOperator import OneParticleOperator, product_trace
 from .AdcMethod import AdcMethod
 from adcc.functions import direct_sum, einsum, zeros_like, ones_like, empty_like
+from adcc import block as b
 from adcc.adc_pp.state2state_transition_dm import state2state_transition_dm
 from adcc.adc_pp.transition_dm import transition_dm
 from .MoSpaces import MoSpaces
@@ -257,9 +258,15 @@ class ElectronicTransition:
 
             for i in np.arange(n_states):
                 for j in np.arange(n_states):
-                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_edge"))
+                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_edge_couple"))
             
-            block_dict["qed_adc2_edge"] = block
+            block_dict["qed_adc2_edge_couple"] = block
+
+            for i in np.arange(n_states):
+                for j in np.arange(n_states):
+                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_edge_phot_couple"))
+            
+            block_dict["qed_adc2_edge_phot_couple"] = block
 
             for i in np.arange(n_states):
                 for j in np.arange(n_states): 
@@ -278,6 +285,65 @@ class ElectronicTransition:
         #    [product_trace(comp, ddm) for comp in dipole_integrals]
         #    for ddm in self.state_diffdm
         #])
+
+    @cached_property
+    @mark_excitation_property()
+    def qed_second_order_ph_ph_couplings(self):
+        block_dict = {}
+        #two_p_op_object = {}
+        omega = self.reference_state.get_qed_omega()
+        qed_t1 = self.ground_state.qed_t1(b.ov)
+        # check if following objects provide correct symmetry and norm
+        # maybe just build p_oo and p_vv and include qed_t1 in final prod_sum
+        
+        def couple(qed_t1, ul, ur):
+            return {
+                b.ooov: einsum("kc,ia,ja->kjic", qed_t1, ul, ur) + einsum("ka,ia,jb->jkib", qed_t1, ul, ur),
+                b.ovvv: einsum("kc,ia,ib->kacb", qed_t1, ul, ur) + einsum("ic,ia,jb->jabc", qed_t1, ul, ur) 
+            }
+
+        def phot_couple(qed_t1, ul, ur):
+            return {
+                b.ooov: einsum("kc,ia,ja->kijc", qed_t1, ul, ur) + einsum("kb,ia,jb->ikja", qed_t1, ul, ur),
+                b.ovvv: einsum("kc,ia,ib->kbca", qed_t1, ul, ur) + einsum("jc,ia,jb->ibac", qed_t1, ul, ur) 
+            }
+
+        def prod_sum(hf, two_p_op):
+            return (1/6) * (einsum("ijka,ijka->", hf.ooov, two_p_op[b.ooov]) + einsum("iabc,iabc->", hf.ovvv, two_p_op[b.ovvv]))
+        
+        n_states = len(self.excitation_energy)
+        single_excitation_states = np.zeros(n_states)
+
+        for i, vec in enumerate(self.excitation_vector):
+            singles_norm = vec.ph.dot(vec.ph)
+            if singles_norm >= 0.8:
+                single_excitation_states[i] = 1
+
+        block_couple = np.outer(single_excitation_states, single_excitation_states)
+        block_phot_couple = np.outer(single_excitation_states, single_excitation_states)
+        exvec = self.excitation_vector 
+
+        for i in np.arange(n_states):
+            for j in np.arange(n_states):
+                if block_couple[i, j] == 1:
+                    block_couple[i, j] = prod_sum(self.reference_state, couple(qed_t1, exvec[i].ph, exvec[j].ph))
+                    block_phot_couple[i, j] = prod_sum(self.reference_state, phot_couple(qed_t1, exvec[i].ph, exvec[j].ph))
+
+        block_dict["couple"] = block_couple
+        block_dict["phot_couple"] = block_phot_couple
+        """
+        def s2s(i, f):#, s2s_contribution):
+            self.ground_state.s2s_contribution = "adc0"
+            vec = self.excitation_vector
+            return state2state_transition_dm(self.method, self.ground_state, vec[i], vec[f])    
+
+        def prod_sum_couple(hf, i, f):
+            return 0.25 * (
+                - einsum("kc,ji,kjic->", qed_t1, s2s(i, f).oo, hf.ooov)
+                - einsum("ka,ia,jb,jkib->", ) # we probably need an other factor, and we need to check the norm and symmetry
+            )
+        """
+        return block_dict
 
     @cached_property
     @mark_excitation_property()

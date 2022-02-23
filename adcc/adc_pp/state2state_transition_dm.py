@@ -83,8 +83,7 @@ def s2s_tdm_qed_adc2_diag_part(mp, amplitude_l, amplitude_r, intermediates):
 
     return dm_new
 
-
-def s2s_tdm_qed_adc2_edge_part(mp, amplitude_l, amplitude_r, intermediates): 
+def s2s_tdm_qed_adc2_edge_part_couple(mp, amplitude_l, amplitude_r, intermediates): 
     dm = s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates)
     # this should still be symmetric
     ul1 = amplitude_l.ph
@@ -100,6 +99,18 @@ def s2s_tdm_qed_adc2_edge_part(mp, amplitude_l, amplitude_r, intermediates):
             + einsum("ji,ic->jc", p0_oo, mp.qed_t1(b.ov)) #- einsum("ia,ic,ja->jc", u1, mp.qed_t1(b.ov), u1)
             #+ ul1.dot(mp.qed_t1(b.ov)) * ur1
     )
+
+    return dm_new
+
+def s2s_tdm_qed_adc2_edge_part_phot_couple(mp, amplitude_l, amplitude_r, intermediates): 
+    dm = s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates)
+    # this should still be symmetric
+    ul1 = amplitude_l.ph
+    ur1 = amplitude_r.ph
+    p0_oo = dm.oo.evaluate()
+    p0_vv = dm.vv.evaluate()
+
+    dm_new = OneParticleOperator(mp, is_symmetric=False)
 
     dm_new.vo = (einsum("ia->ai", mp.qed_t1(b.ov)) * ul1.dot(ur1) #this would usually be 1, but we use the ADC(2) vector in this case, so this is usually a little smaller than 1
             - einsum("kb,ba->ak", mp.qed_t1(b.ov), p0_vv) #- einsum("ia,kb,ib->ka", u1, mp.qed_t1(b.ov), u1)
@@ -196,7 +207,8 @@ DISPATCH = {"adc0": s2s_tdm_adc0,
             "adc1": s2s_tdm_adc0,       # same as ADC(0)
             "qed_adc1": s2s_tdm_adc1_qed, # same as ADC(0), but with normalized .ph vector parts
             "qed_adc2_diag": s2s_tdm_qed_adc2_diag_part,
-            "qed_adc2_edge": s2s_tdm_qed_adc2_edge_part,
+            "qed_adc2_edge_couple": s2s_tdm_qed_adc2_edge_part_couple,
+            "qed_adc2_edge_phot_couple": s2s_tdm_qed_adc2_edge_part_phot_couple,
             "qed_adc2_ph_pphh": s2s_tdm_qed_adc2_ph_pphh_coupl_part,
             "qed_adc2_pphh_ph": s2s_tdm_qed_adc2_pphh_ph_phot_coupl_part,
             "adc2": s2s_tdm_adc2,
