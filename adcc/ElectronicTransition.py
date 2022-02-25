@@ -230,6 +230,10 @@ class ElectronicTransition:
             vec = self.excitation_vector
             return state2state_transition_dm(self.method, self.ground_state, vec[i], vec[f])
 
+        def final_block(name):
+            return np.array([[product_trace(dipole_integrals[2], s2s(i, j, name)) for j in np.arange(n_states)]
+                     for i in np.arange(n_states)])
+
         block_dict = {}
         #block = np.zeros((n_states, n_states))
         single_excitation_states = np.zeros(n_states)
@@ -239,46 +243,46 @@ class ElectronicTransition:
             if singles_norm >= 0.8:
                 single_excitation_states[i] = 1
 
-        block = np.outer(single_excitation_states, single_excitation_states)
+        #block = np.outer(single_excitation_states, single_excitation_states)
 
-        for i in np.arange(n_states):
-            for j in np.arange(n_states):
-                if block[i, j] == 1:
-                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "adc1"))#"qed_adc1"))
+        #for i in np.arange(n_states):
+        #    for j in np.arange(n_states):
+        #        #if block[i, j] == 1:
+        #        block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "adc1"))#"qed_adc1"))
 
-        block_dict["qed_adc1_off_diag"] = block
+        block_dict["qed_adc1_off_diag"] = final_block("adc1")
 
         if self.method.name == "adc2" and hasattr(self.reference_state, "second_order_coupling"):
             print("second order coupling is calculated as well")
-            for i in np.arange(n_states):
-                for j in np.arange(n_states): 
-                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_diag"))
+            #for i in np.arange(n_states):
+            #    for j in np.arange(n_states): 
+            #        block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_diag"))
             
-            block_dict["qed_adc2_diag"] = block
+            block_dict["qed_adc2_diag"] = final_block("qed_adc2_diag")
 
-            for i in np.arange(n_states):
-                for j in np.arange(n_states):
-                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_edge_couple"))
+            #for i in np.arange(n_states):
+            #    for j in np.arange(n_states):
+            #        block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_edge_couple"))
             
-            block_dict["qed_adc2_edge_couple"] = block
+            block_dict["qed_adc2_edge_couple"] = final_block("qed_adc2_edge_couple")
 
-            for i in np.arange(n_states):
-                for j in np.arange(n_states):
-                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_edge_phot_couple"))
+            #for i in np.arange(n_states):
+            #    for j in np.arange(n_states):
+            #        block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_edge_phot_couple"))
             
-            block_dict["qed_adc2_edge_phot_couple"] = block
+            block_dict["qed_adc2_edge_phot_couple"] = final_block("qed_adc2_edge_phot_couple")
 
-            for i in np.arange(n_states):
-                for j in np.arange(n_states): 
-                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_ph_pphh"))
+            #for i in np.arange(n_states):
+            #    for j in np.arange(n_states): 
+            #        block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_ph_pphh"))
             
-            block_dict["qed_adc2_ph_pphh"] = block
+            block_dict["qed_adc2_ph_pphh"] = final_block("qed_adc2_ph_pphh")
 
-            for i in np.arange(n_states):
-                for j in np.arange(n_states): 
-                    block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_pphh_ph"))
+            #for i in np.arange(n_states):
+            #    for j in np.arange(n_states): 
+            #        block[i, j] = product_trace(dipole_integrals[2], s2s(i, j, "qed_adc2_pphh_ph"))
             
-            block_dict["qed_adc2_pphh_ph"] = block
+            block_dict["qed_adc2_pphh_ph"] = final_block("qed_adc2_pphh_ph")
 
         return block_dict
         #return np.array([
@@ -309,7 +313,8 @@ class ElectronicTransition:
             }
 
         def prod_sum(hf, two_p_op):
-            return (1/6) * (einsum("ijka,ijka->", hf.ooov, two_p_op[b.ooov]) + einsum("iabc,iabc->", hf.ovvv, two_p_op[b.ovvv]))
+            return (1/6) * (einsum("ijka,ijka->", hf.ooov, two_p_op[b.ooov]) 
+                            + einsum("iabc,iabc->", hf.ovvv, two_p_op[b.ovvv]))
         
         n_states = len(self.excitation_energy)
         single_excitation_states = np.zeros(n_states)

@@ -289,12 +289,12 @@ def block_ph_ph_2(hf, mp, intermediates):
                     - direct_sum("a+i->ia", qed_i1.diagonal(), qed_i2.diagonal())
                     + (1/2) * 2 * einsum("ia,ia->ia", mp.qed_t1(b.ov), hf.get_qed_total_dip(b.ov)))
         ))
-    elif hasattr(hf, "first_order_coupling"):
-        diagonal = AmplitudeVector(ph=(
-            + direct_sum("a-i->ia", i1.diagonal(), i2.diagonal())
-            - einsum("IaIa->Ia", hf.ovov + hf.qed_D_object(b.ovov))
-            - einsum("ikac,ikac->ia", mp.t2oo, hf.oovv)
-        ))
+    #elif hasattr(hf, "first_order_coupling"):
+    #    diagonal = AmplitudeVector(ph=(
+    #        + direct_sum("a-i->ia", i1.diagonal(), i2.diagonal())
+    #        - einsum("IaIa->Ia", hf.ovov + hf.qed_D_object(b.ovov))
+    #        - einsum("ikac,ikac->ia", mp.t2oo, hf.oovv)
+    #    ))
     else:
         diagonal = AmplitudeVector(ph=(
             + direct_sum("a-i->ia", i1.diagonal(), i2.diagonal())
@@ -323,14 +323,14 @@ def block_ph_ph_2(hf, mp, intermediates):
                         + (1/2) * (mp.qed_t1(b.ov) * hf.get_qed_total_dip(b.ov).dot(ampl.ph) 
                                 + hf.get_qed_total_dip(b.ov) * mp.qed_t1(b.ov).dot(ampl.ph)))
             ))
-    elif hasattr(hf, "first_order_coupling"):
-        def apply(ampl):
-            return AmplitudeVector(ph=(
-                + einsum("ib,ab->ia", ampl.ph, i1)
-                - einsum("ij,ja->ia", i2, ampl.ph)
-                - einsum("jaib,jb->ia", hf.ovov + hf.qed_D_object(b.ovov), ampl.ph)    # 1
-                - 0.5 * einsum("ikac,kc->ia", term_t2_eri, ampl.ph)  # 2
-            ))
+    #elif hasattr(hf, "first_order_coupling"):
+    #    def apply(ampl):
+    #        return AmplitudeVector(ph=(
+    #            + einsum("ib,ab->ia", ampl.ph, i1)
+    #            - einsum("ij,ja->ia", i2, ampl.ph)
+    #            - einsum("jaib,jb->ia", hf.ovov + hf.qed_D_object(b.ovov), ampl.ph)    # 1
+    #            - 0.5 * einsum("ikac,kc->ia", term_t2_eri, ampl.ph)  # 2
+    #        ))
     else:
         def apply(ampl):
             return AmplitudeVector(ph=(
