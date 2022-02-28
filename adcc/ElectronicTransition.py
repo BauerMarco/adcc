@@ -330,9 +330,9 @@ class ElectronicTransition:
 
         for i in np.arange(n_states):
             for j in np.arange(n_states):
-                if block_couple[i, j] == 1:
-                    block_couple[i, j] = prod_sum(self.reference_state, couple(qed_t1, exvec[i].ph, exvec[j].ph))
-                    block_phot_couple[i, j] = prod_sum(self.reference_state, phot_couple(qed_t1, exvec[i].ph, exvec[j].ph))
+                #if block_couple[i, j] == 1:
+                block_couple[i, j] = prod_sum(self.reference_state, couple(qed_t1, exvec[i].ph, exvec[j].ph))
+                block_phot_couple[i, j] = prod_sum(self.reference_state, phot_couple(qed_t1, exvec[i].ph, exvec[j].ph))
 
         block_dict["couple"] = block_couple
         block_dict["phot_couple"] = block_phot_couple

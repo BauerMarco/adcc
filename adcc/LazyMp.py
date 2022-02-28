@@ -149,7 +149,7 @@ class LazyMp:
     @timed_member_call(timer="timer")
     def mp2_diffdm(self):
         """
-        Return the MP2 differensce density in the MO basis.
+        Return the MP2 difference density in the MO basis.
         """
         hf = self.reference_state
         ret = OneParticleOperator(self.mospaces, is_symmetric=True)
@@ -203,13 +203,34 @@ class LazyMp:
         ret.reference_state = self.reference_state
         return evaluate(ret)
 
+    @cached_property
+    def mp1_diffdm_qed(self):
+        """
+        This does not really exist, but since the dipole operator also contains
+        the factor (b^{dagger} + b), there exists a term, which is required
+        in the evaluation for the corresponding dipole properties, which are
+        themselves needed, to perform the qed-adc(2) test
+        """
+        ret = OneParticleOperator(self.mospaces, is_symmetric=True)
+        hf = self.reference_state
+        omega = ReferenceState.get_qed_omega(hf)
+
+        ret.ov = - self.qed_t1(b.ov) #* np.sqrt(omega/2) #this is left out, since it is
+        #also left out for the s2s properties and reintroduced in the testing script
+
+        ret.reference_state = self.reference_state
+        return evaluate(ret)
+
     def density(self, level=2):
         """
         Return the MP density in the MO basis with all corrections
         up to the specified order of perturbation theory
         """
         if level == 1:
-            return self.reference_state.density
+            if hasattr(self.reference_state, "coupling"):
+                return self.reference_state.density# + self.mp1_diffdm_qed
+            else:
+                return self.reference_state.density
         elif level == 2:
             return self.reference_state.density + self.mp2_diffdm
         else:
