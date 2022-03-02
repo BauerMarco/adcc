@@ -215,7 +215,7 @@ class LazyMp:
         hf = self.reference_state
         omega = ReferenceState.get_qed_omega(hf)
 
-        ret.ov = - self.qed_t1(b.ov) #* np.sqrt(omega/2) #this is left out, since it is
+        ret.ov = self.qed_t1(b.ov) #* omega/2 #this is left out, since it is
         #also left out for the s2s properties and reintroduced in the testing script
 
         ret.reference_state = self.reference_state

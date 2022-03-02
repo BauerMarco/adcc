@@ -46,13 +46,15 @@ def s2s_tdm_adc1_qed(mp, amplitude_l, amplitude_r, intermediates):
     check_singles_amplitudes([b.o, b.v], amplitude_l, amplitude_r)
     ul1 = amplitude_l.ph
     ur1 = amplitude_r.ph
+    p0 = mp.mp1_diffdm_qed
+    dm = s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates)
+    p0_oo = dm.oo.evaluate()
+    p0_vv = dm.vv.evaluate()
 
-    ul1 = ul1 / (ul1.dot(ul1))
-    ur1 = ur1 / (ur1.dot(ur1))
+    dm.ov = - ul1.dot(ur1) * p0.ov
 
-    dm = OneParticleOperator(mp, is_symmetric=False)
-    dm.oo = -einsum('ja,ia->ij', ul1, ur1)
-    dm.vv = einsum('ia,ib->ab', ul1, ur1)
+    dm.vo = - ul1.dot(ur1) * einsum("ia->ai", p0.ov)
+
     return dm
 
 
@@ -65,7 +67,6 @@ def s2s_tdm_qed_adc2_diag_part(mp, amplitude_l, amplitude_r, intermediates):
     ur1 = amplitude_r.ph
     p0_oo = dm.oo.evaluate()
     p0_vv = dm.vv.evaluate()
-    p0 = mp.mp1_diffdm_qed
 
     dm_new = OneParticleOperator(mp, is_symmetric=False)
 
@@ -74,19 +75,19 @@ def s2s_tdm_qed_adc2_diag_part(mp, amplitude_l, amplitude_r, intermediates):
             - einsum("kb,ab->ka", mp.qed_t1(b.ov), p0_vv) #- einsum("ia,kb,ib->ka", u1, mp.qed_t1(b.ov), u1)
             + einsum("ji,ic->jc", p0_oo, mp.qed_t1(b.ov)) #- einsum("ia,ic,ja->jc", u1, mp.qed_t1(b.ov), u1)
             + ul1.dot(mp.qed_t1(b.ov)) * ur1
-    ) / 2 + (# since H_0 terms cancel half of the contributions above (fully canceling the first term)
-            - einsum("ib,ba->ia", p0.ov, p0_vv)
-            + einsum("ij,ja->ia", p0_oo, p0.ov)
-    )
+    ) / 2 #+ (# since H_0 terms cancel half of the contributions above (fully canceling the first term)
+            #- einsum("ib,ba->ia", p0.ov, p0_vv)
+            #+ einsum("ij,ja->ia", p0_oo, p0.ov)
+    #)  # not sure about that 1/2 factor
 
     dm_new.vo = (#mp.qed_t1(b.ov) * u1.dot(u1) #this would usually be 1, but we use the ADC(2) vector in this case, so this is usually a little smaller than 1
             - einsum("kb,ba->ak", mp.qed_t1(b.ov), p0_vv) #- einsum("ia,kb,ib->ka", u1, mp.qed_t1(b.ov), u1)
             + einsum("ij,ic->cj", p0_oo, mp.qed_t1(b.ov)) #- einsum("ia,ic,ja->jc", u1, mp.qed_t1(b.ov), u1)
             + ur1.dot(mp.qed_t1(b.ov)) * einsum("ia->ai", ul1)
-    ) / 2 + (# since H_0 terms cancel half of the contributions above (fully canceling the first term)
-            - einsum("ib,ab->ai", p0.ov, p0_vv)
-            + einsum("ji,ja->ai", p0_oo, p0.ov)
-    )
+    ) / 2 #+ (# since H_0 terms cancel half of the contributions above (fully canceling the first term)
+            #- einsum("ib,ab->ai", p0.ov, p0_vv)
+            #+ einsum("ji,ja->ai", p0_oo, p0.ov)
+    #)  # not sure about that 1/2 factor
 
     return dm_new
 
@@ -97,6 +98,7 @@ def s2s_tdm_qed_adc2_edge_part_couple(mp, amplitude_l, amplitude_r, intermediate
     ur1 = amplitude_r.ph
     p0_oo = dm.oo.evaluate()
     p0_vv = dm.vv.evaluate()
+    #p0 = mp.mp1_diffdm_qed
 
     dm_new = OneParticleOperator(mp, is_symmetric=False)
 
@@ -105,6 +107,8 @@ def s2s_tdm_qed_adc2_edge_part_couple(mp, amplitude_l, amplitude_r, intermediate
             - einsum("kb,ab->ka", mp.qed_t1(b.ov), p0_vv) #- einsum("ia,kb,ib->ka", u1, mp.qed_t1(b.ov), u1)
             + einsum("ji,ic->jc", p0_oo, mp.qed_t1(b.ov)) #- einsum("ia,ic,ja->jc", u1, mp.qed_t1(b.ov), u1)
             #+ ul1.dot(mp.qed_t1(b.ov)) * ur1
+            #- einsum("ib,ba->ia", p0.ov, p0_vv)
+            #+ einsum("ij,ja->ia", p0_oo, p0.ov)
     )
 
     return dm_new
@@ -116,6 +120,7 @@ def s2s_tdm_qed_adc2_edge_part_phot_couple(mp, amplitude_l, amplitude_r, interme
     ur1 = amplitude_r.ph
     p0_oo = dm.oo.evaluate()
     p0_vv = dm.vv.evaluate()
+    #p0 = mp.mp1_diffdm_qed
 
     dm_new = OneParticleOperator(mp, is_symmetric=False)
 
@@ -123,6 +128,8 @@ def s2s_tdm_qed_adc2_edge_part_phot_couple(mp, amplitude_l, amplitude_r, interme
             - einsum("kb,ba->ak", mp.qed_t1(b.ov), p0_vv) #- einsum("ia,kb,ib->ka", u1, mp.qed_t1(b.ov), u1)
             + einsum("ij,ic->cj", p0_oo, mp.qed_t1(b.ov)) #- einsum("ia,ic,ja->jc", u1, mp.qed_t1(b.ov), u1)
             #+ ur1.dot(mp.qed_t1(b.ov)) * einsum("ia->ai", ul1)
+            #- einsum("ib,ab->ai", p0.ov, p0_vv)
+            #+ einsum("ji,ja->ai", p0_oo, p0.ov)
     )
 
     return dm_new
@@ -134,7 +141,7 @@ def s2s_tdm_qed_adc2_ph_pphh_coupl_part(mp, amplitude_l, amplitude_r, intermedia
 
     dm = OneParticleOperator(mp, is_symmetric=False)
 
-    dm.ov = 4 * einsum("ia,ikac->kc", ul1, ur2)
+    dm.ov = -2 * einsum("jb,ijab->ia", ul1, ur2)
 
     return dm
 
@@ -145,7 +152,7 @@ def s2s_tdm_qed_adc2_pphh_ph_phot_coupl_part(mp, amplitude_l, amplitude_r, inter
 
     dm = OneParticleOperator(mp, is_symmetric=False)
 
-    dm.vo = 4 * einsum("ijab,ia->bj", ul2, ur1)
+    dm.vo = -2 * einsum("ijab,jb->ai", ul2, ur1)
 
     return dm    
 
