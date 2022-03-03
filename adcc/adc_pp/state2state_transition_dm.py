@@ -154,7 +154,19 @@ def s2s_tdm_qed_adc2_pphh_ph_phot_coupl_part(mp, amplitude_l, amplitude_r, inter
 
     dm.vo = -2 * einsum("ijab,jb->ai", ul2, ur1)
 
-    return dm    
+    return dm
+
+
+def s2s_tdm_qed_adc2_pphh_pphh_part(mp, amplitude_l, amplitude_r, intermediates):
+    ul2 = amplitude_l.pphh
+    ur2 = amplitude_r.pphh
+
+    dm = OneParticleOperator(mp, is_symmetric=False)
+
+    dm.oo = - 2.0 * einsum('ikab,jkab->ij', ur2, ul2)
+    dm.vv = + 2.0 * einsum('ijac,ijbc->ab', ul2, ur2)
+
+    return dm
 
 
 def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
@@ -225,6 +237,7 @@ DISPATCH = {"adc0": s2s_tdm_adc0,
             "qed_adc2_edge_phot_couple": s2s_tdm_qed_adc2_edge_part_phot_couple,
             "qed_adc2_ph_pphh": s2s_tdm_qed_adc2_ph_pphh_coupl_part,
             "qed_adc2_pphh_ph": s2s_tdm_qed_adc2_pphh_ph_phot_coupl_part,
+            "qed_adc2_pphh_pphh": s2s_tdm_qed_adc2_pphh_pphh_part,
             "adc2": s2s_tdm_adc2,
             "adc2x": s2s_tdm_adc2,      # same as ADC(2)
             }

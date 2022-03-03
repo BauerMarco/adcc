@@ -284,6 +284,8 @@ class ElectronicTransition:
             
             block_dict["qed_adc2_pphh_ph"] = final_block("qed_adc2_pphh_ph")
 
+            #block_dict["qed_adc2_pphh_pphh"] = final_block("qed_adc2_pphh_pphh")
+
         return block_dict
         #return np.array([
         #    [product_trace(comp, ddm) for comp in dipole_integrals]
