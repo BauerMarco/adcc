@@ -48,7 +48,7 @@ def tdm_adc0(mp, amplitude, intermediates):
 def tdm_adc1(mp, amplitude, intermediates):
     dm = tdm_adc0(mp, amplitude, intermediates)  # Get ADC(0) result
     # adc1_dp0_ov
-    dm.ov = -einsum("ijab,jb->ia", mp.t2(b.oovv), amplitude.ph)
+    dm.ov = - einsum("ijab,jb->ia", mp.t2(b.oovv), amplitude.ph)
     return dm
 
 

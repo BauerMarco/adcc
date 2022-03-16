@@ -42,20 +42,20 @@ def s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates):
     return dm
 
 
-def s2s_tdm_adc1_qed(mp, amplitude_l, amplitude_r, intermediates):
-    check_singles_amplitudes([b.o, b.v], amplitude_l, amplitude_r)
-    ul1 = amplitude_l.ph
-    ur1 = amplitude_r.ph
-    p0 = mp.mp1_diffdm_qed
-    dm = s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates)
-    p0_oo = dm.oo.evaluate()
-    p0_vv = dm.vv.evaluate()
+#def s2s_tdm_adc1_qed(mp, amplitude_l, amplitude_r, intermediates):
+#    check_singles_amplitudes([b.o, b.v], amplitude_l, amplitude_r)
+#    ul1 = amplitude_l.ph
+#    ur1 = amplitude_r.ph
+#    p0 = mp.mp1_diffdm_qed
+#    dm = s2s_tdm_adc0(mp, amplitude_l, amplitude_r, intermediates)
+#    p0_oo = dm.oo.evaluate()
+#    p0_vv = dm.vv.evaluate()
 
-    dm.ov = - ul1.dot(ur1) * p0.ov
+#    dm.ov = - ul1.dot(ur1) * p0.ov
 
-    dm.vo = - ul1.dot(ur1) * einsum("ia->ai", p0.ov)
+#    dm.vo = - ul1.dot(ur1) * einsum("ia->ai", p0.ov)
 
-    return dm
+#    return dm
 
 
 def s2s_tdm_qed_adc2_diag_part(mp, amplitude_l, amplitude_r, intermediates): 
@@ -157,16 +157,16 @@ def s2s_tdm_qed_adc2_pphh_ph_phot_coupl_part(mp, amplitude_l, amplitude_r, inter
     return dm
 
 
-def s2s_tdm_qed_adc2_pphh_pphh_part(mp, amplitude_l, amplitude_r, intermediates):
-    ul2 = amplitude_l.pphh
-    ur2 = amplitude_r.pphh
+#def s2s_tdm_qed_adc2_pphh_pphh_part(mp, amplitude_l, amplitude_r, intermediates):
+#    ul2 = amplitude_l.pphh
+#    ur2 = amplitude_r.pphh
 
-    dm = OneParticleOperator(mp, is_symmetric=False)
+#    dm = OneParticleOperator(mp, is_symmetric=False)
 
-    dm.oo = - 2.0 * einsum('ikab,jkab->ij', ur2, ul2)
-    dm.vv = + 2.0 * einsum('ijac,ijbc->ab', ul2, ur2)
+#    dm.oo = - 2.0 * einsum('ikab,jkab->ij', ur2, ul2)
+#    dm.vv = + 2.0 * einsum('ijac,ijbc->ab', ul2, ur2)
 
-    return dm
+#    return dm
 
 
 def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
@@ -231,13 +231,13 @@ def s2s_tdm_adc2(mp, amplitude_l, amplitude_r, intermediates):
 # Ref: https://doi.org/10.1080/00268976.2013.859313
 DISPATCH = {"adc0": s2s_tdm_adc0,
             "adc1": s2s_tdm_adc0,       # same as ADC(0)
-            "qed_adc1": s2s_tdm_adc1_qed, # same as ADC(0), but with normalized .ph vector parts
+            #"qed_adc1": s2s_tdm_adc1_qed, # same as ADC(0), but with normalized .ph vector parts
             "qed_adc2_diag": s2s_tdm_qed_adc2_diag_part,
             "qed_adc2_edge_couple": s2s_tdm_qed_adc2_edge_part_couple,
             "qed_adc2_edge_phot_couple": s2s_tdm_qed_adc2_edge_part_phot_couple,
             "qed_adc2_ph_pphh": s2s_tdm_qed_adc2_ph_pphh_coupl_part,
             "qed_adc2_pphh_ph": s2s_tdm_qed_adc2_pphh_ph_phot_coupl_part,
-            "qed_adc2_pphh_pphh": s2s_tdm_qed_adc2_pphh_pphh_part,
+            #"qed_adc2_pphh_pphh": s2s_tdm_qed_adc2_pphh_pphh_part,
             "adc2": s2s_tdm_adc2,
             "adc2x": s2s_tdm_adc2,      # same as ADC(2)
             }

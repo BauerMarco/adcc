@@ -315,8 +315,8 @@ class ElectronicTransition:
             }
 
         def prod_sum(hf, two_p_op):
-            return (1/6) * (einsum("ijka,ijka->", hf.ooov, two_p_op[b.ooov]) 
-                            + einsum("iabc,iabc->", hf.ovvv, two_p_op[b.ovvv])) # not sure about the 1/3 factor instead of 1/6
+            return - (einsum("ijka,ijka->", hf.ooov, two_p_op[b.ooov]) 
+                            + einsum("iabc,iabc->", hf.ovvv, two_p_op[b.ovvv]))
         
         n_states = len(self.excitation_energy)
         single_excitation_states = np.zeros(n_states)
