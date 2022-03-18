@@ -315,7 +315,7 @@ class ElectronicTransition:
             }
 
         def prod_sum(hf, two_p_op):
-            return - (einsum("ijka,ijka->", hf.ooov, two_p_op[b.ooov]) 
+            return + (einsum("ijka,ijka->", hf.ooov, two_p_op[b.ooov]) 
                             + einsum("iabc,iabc->", hf.ovvv, two_p_op[b.ovvv]))
         
         n_states = len(self.excitation_energy)
