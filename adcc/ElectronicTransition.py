@@ -297,7 +297,7 @@ class ElectronicTransition:
     def qed_second_order_ph_ph_couplings(self):
         block_dict = {}
         #two_p_op_object = {}
-        omega = self.reference_state.get_qed_omega()
+        #omega = self.reference_state.get_qed_omega()
         qed_t1 = self.ground_state.qed_t1(b.ov)
         # check if following objects provide correct symmetry and norm
         # maybe just build p_oo and p_vv and include qed_t1 in final prod_sum
