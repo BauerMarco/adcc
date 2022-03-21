@@ -317,27 +317,33 @@ class ElectronicTransition:
         def prod_sum(hf, two_p_op):
             return + (einsum("ijka,ijka->", hf.ooov, two_p_op[b.ooov]) 
                             + einsum("iabc,iabc->", hf.ovvv, two_p_op[b.ovvv]))
+
+        def final_block(func):
+            return np.array([[prod_sum(self.reference_state, func(qed_t1, i.ph, j.ph)) for i in self.excitation_vector]
+                               for j in self.excitation_vector])
+
         
         n_states = len(self.excitation_energy)
         single_excitation_states = np.zeros(n_states)
 
-        for i, vec in enumerate(self.excitation_vector):
-            singles_norm = vec.ph.dot(vec.ph)
-            if singles_norm >= 0.8:
-                single_excitation_states[i] = 1
+        #for i, vec in enumerate(self.excitation_vector):
+        #    singles_norm = vec.ph.dot(vec.ph)
+        #    if singles_norm >= 0.8:
+        #        single_excitation_states[i] = 1
 
         block_couple = np.outer(single_excitation_states, single_excitation_states)
         block_phot_couple = np.outer(single_excitation_states, single_excitation_states)
         exvec = self.excitation_vector 
 
-        for i in np.arange(n_states):
-            for j in np.arange(n_states):
+        #for i in np.arange(n_states):
+        #    for j in np.arange(n_states):
                 #if block_couple[i, j] == 1:
-                block_couple[i, j] = prod_sum(self.reference_state, couple(qed_t1, exvec[i].ph, exvec[j].ph))
-                block_phot_couple[i, j] = prod_sum(self.reference_state, phot_couple(qed_t1, exvec[i].ph, exvec[j].ph))
+        #        block_couple[i, j] = prod_sum(self.reference_state, couple(qed_t1, exvec[i].ph, exvec[j].ph))
+        #        block_phot_couple[i, j] = prod_sum(self.reference_state, phot_couple(qed_t1, exvec[i].ph, exvec[j].ph))
+                
 
-        block_dict["couple"] = block_couple
-        block_dict["phot_couple"] = block_phot_couple
+        block_dict["couple"] = final_block(couple)#block_couple
+        block_dict["phot_couple"] = final_block(phot_couple)#block_phot_couple
         """
         def s2s(i, f):#, s2s_contribution):
             self.ground_state.s2s_contribution = "adc0"

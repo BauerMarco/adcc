@@ -295,6 +295,12 @@ def block_ph_ph_2(hf, mp, intermediates):
     #        - einsum("IaIa->Ia", hf.ovov + hf.qed_D_object(b.ovov))
     #        - einsum("ikac,ikac->ia", mp.t2oo, hf.oovv)
     #    ))
+    elif hasattr(hf, "only_H_0"):
+        diagonal = AmplitudeVector(ph=(# MP(2) energy term is diagonal, so its not affected from unitary transformation
+            + direct_sum("a-i->ia", i1.diagonal(), i2.diagonal())
+            #- einsum("IaIa->Ia", hf.ovov)
+            + einsum("ikac,ikac->ia", mp.t2oo, hf.oovv)
+        ))
     else:
         diagonal = AmplitudeVector(ph=(
             + direct_sum("a-i->ia", i1.diagonal(), i2.diagonal())
@@ -444,13 +450,21 @@ block_cvs_ph_ph_3 = block_ph_ph_3
 @register_as_intermediate
 def adc2_i1(hf, mp, intermediates):
     # This definition differs from libadc. It additionally has the hf.fvv term.
-    return hf.fvv + 0.5 * einsum("ijac,ijbc->ab", mp.t2oo, hf.oovv).symmetrise()
+    tmp = 0.5 * einsum("ijac,ijbc->ab", mp.t2oo, hf.oovv).symmetrise()
+    if hasattr(hf, "only_H_0"):
+        return hf.fvv - tmp
+    else:
+        return hf.fvv + tmp
 
 
 @register_as_intermediate
 def adc2_i2(hf, mp, intermediates):
     # This definition differs from libadc. It additionally has the hf.foo term.
-    return hf.foo - 0.5 * einsum("ikab,jkab->ij", mp.t2oo, hf.oovv).symmetrise()
+    tmp = 0.5 * einsum("ikab,jkab->ij", mp.t2oo, hf.oovv).symmetrise()
+    if hasattr(hf, "only_H_0"):
+        return hf.foo + tmp
+    else:
+        return hf.foo - tmp
 
 
 # qed intermediates for adc2, without the factor of (omega/2), which is added in the actual matrix builder

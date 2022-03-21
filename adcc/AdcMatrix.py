@@ -141,6 +141,10 @@ class AdcMatrix(AdcMatrixlike):
             tmp_orders.update(block_orders)
             block_orders = tmp_orders
 
+        if method.base_method.name == "adc2" and hasattr(self.reference_state, "only_H_0"):
+            print("only_H_0 terms are used ( this is required for vectors of qed_adc(2) test)")
+            block_orders = dict(ph_ph=2, ph_pphh=0,    pphh_ph=0,    pphh_pphh=0)
+
         # Sanity checks on block_orders
         for block in block_orders.keys():
             if block not in ("ph_ph", "ph_pphh", "pphh_ph", "pphh_pphh"):
