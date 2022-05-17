@@ -553,14 +553,13 @@ def block_ph_ph_1_phot(hf, mp, intermediates):
         #np.insert(diagonal, 0, omega)
 
         def apply(ampl):
-            mvprod = AmplitudeVector(ph=(                 # PT order
+            return AmplitudeVector(ph=(                 # PT order
                 + einsum("ib,ab->ia", ampl.ph1, hf.fvv)  # 0
                 - einsum("IJ,Ja->Ia", fCC, ampl.ph1)     # 0
                 - einsum("JaIb,Jb->Ia", CvCv, ampl.ph1)  # 1
                 + omega * ampl.ph1
             ))
             #np.insert(mvprod, 0, omega)
-            return mvprod
     else:
         raise NotImplementedError("and not hasattr(hf, qed_hf)")
     return AdcBlock(apply, diagonal)
@@ -573,7 +572,7 @@ def block_ph_ph_1_couple(hf, mp, intermediates):
         def apply(ampl):
             return AmplitudeVector(ph=(
                 sqrt(omega / 2) * (- einsum("ib,ab->ia", ampl.ph, mp.qed_t1_df(b.vv))
-                                        + einsum("ij,ja->ia", mp.qed_t1_df(b.oo), ampl.ph))
+                                    + einsum("ij,ja->ia", mp.qed_t1_df(b.oo), ampl.ph))
             ))
 
             #add_axis1 = - np.sqrt(omega / 2) * mp.qed_t1_df(b.ov)
