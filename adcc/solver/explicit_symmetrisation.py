@@ -66,7 +66,7 @@ class IndexSymmetrisation():
                 vec[b] = evaluate(self.symmetrisation_functions[b](vec[b]))
             return vec
 
-        if isinstance(new_vectors, AmplitudeVector):
+        if isinstance(new_vectors, (AmplitudeVector, QED_AmplitudeVector)):
             return self.symmetrise([new_vectors])[0]
         elif isinstance(new_vectors[0], QED_AmplitudeVector):
             # we dont have to symmetrise the gs blocks...actually only the pphh blocks are symmetrised here
@@ -96,7 +96,7 @@ class IndexSpinSymmetrisation(IndexSymmetrisation):
         self.enforce_spin_kind = enforce_spin_kind
 
     def symmetrise(self, new_vectors):
-        if isinstance(new_vectors, AmplitudeVector):
+        if isinstance(new_vectors, (AmplitudeVector, QED_AmplitudeVector)):
             return self.symmetrise([new_vectors])[0]
         new_vectors = super().symmetrise(new_vectors)
 
