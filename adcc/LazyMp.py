@@ -151,6 +151,7 @@ class LazyMp:
         """
         Return the MP2 difference density in the MO basis.
         """
+        """
         hf = self.reference_state
         ret = OneParticleOperator(self.mospaces, is_symmetric=True)
         omega = ReferenceState.get_qed_omega(hf)
@@ -168,6 +169,33 @@ class LazyMp:
         ) / self.df(b.ov)
         ret.vv = 0.5 * (einsum("ijac,ijbc->ab", self.t2oo, self.t2oo)
                         + einsum("ia,ib->ab", self.qed_t1(b.ov), self.qed_t1(b.ov)) * omega)
+        """
+        hf = self.reference_state
+        ret = OneParticleOperator(self.mospaces, is_symmetric=True)
+        # NOTE: the following 3 blocks are equivalent to the cvs_p0 intermediates
+        # defined at the end of this file
+        # the following terms including omega originate from the qed correction
+        ret.oo = -0.5 * einsum("ikab,jkab->ij", self.t2oo, self.t2oo)
+                        #+ einsum("ia,ja->ij", self.qed_t1(b.ov), self.qed_t1(b.ov)) * omega)
+        ret.ov = -0.5 * (
+            + einsum("ijbc,jabc->ia", self.t2oo, hf.ovvv)
+            + einsum("jkib,jkab->ia", hf.ooov, self.t2oo)
+            #- (einsum("ib,ab->ia", self.qed_t1(b.ov), hf.get_qed_total_dip(b.vv))
+            #    - einsum("ji,ja->ia", hf.get_qed_total_dip(b.oo), self.qed_t1(b.ov))) * omega
+        ) / self.df(b.ov)
+        ret.vv = 0.5 * einsum("ijac,ijbc->ab", self.t2oo, self.t2oo)
+                        #+ einsum("ia,ib->ab", self.qed_t1(b.ov), self.qed_t1(b.ov)) * omega)
+        if hasattr(hf, "coupling"):# and not hasattr(hf, "approx"):
+            print("mp2 diffdm has been adapted to qed")
+            omega = ReferenceState.get_qed_omega(hf)
+            
+            ret.oo -= 0.5 * einsum("ia,ja->ij", self.qed_t1(b.ov), self.qed_t1(b.ov)) * omega
+
+            ret.ov += 0.5 * (einsum("ib,ab->ia", self.qed_t1(b.ov), hf.get_qed_total_dip(b.vv))
+                    - einsum("ji,ja->ia", hf.get_qed_total_dip(b.oo), self.qed_t1(b.ov)) * omega
+                    ) / self.df(b.ov)
+
+            ret.vv += 0.5 * einsum("ia,ib->ab", self.qed_t1(b.ov), self.qed_t1(b.ov)) * omega
 
         if self.has_core_occupied_space:
             # additional terms to "revert" CVS for ground state density

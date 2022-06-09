@@ -277,10 +277,10 @@ def block_ph_ph_2(hf, mp, intermediates):
     i1 = intermediates.adc2_i1
     i2 = intermediates.adc2_i2
     
-    omega = float(ReferenceState.get_qed_omega(hf))
-    qed_i1 = intermediates.adc2_qed_i1
-    qed_i2 = intermediates.adc2_qed_i2
     if hasattr(hf, "qed_in_matrix"):
+        omega = float(ReferenceState.get_qed_omega(hf))
+        qed_i1 = intermediates.adc2_qed_i1
+        qed_i2 = intermediates.adc2_qed_i2
         diagonal = AmplitudeVector(ph=(
             + direct_sum("a-i->ia", i1.diagonal(), i2.diagonal())
             - einsum("IaIa->Ia", hf.ovov)
