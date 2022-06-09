@@ -23,7 +23,11 @@
 import warnings
 import numpy as np
 
+<<<<<<< HEAD
 from .misc import cached_property, requires_module
+=======
+from .misc import cached_member_function, cached_property
+>>>>>>> qed_adc_only_vacuum_coupling
 from .timings import Timer, timed_member_call
 from .visualisation import ExcitationSpectrum
 from .OneParticleOperator import OneParticleOperator, product_trace

@@ -252,7 +252,7 @@ class ExcitedStates(ElectronicTransition):
             gs_dip_moment = self.reference_state.dipole_moment
         else:
             gs_dip_moment = self.ground_state.dipole_moment(pmethod.level)
-
+        #print("gs_dip_moment", gs_dip_moment)
         dipole_integrals = self.operators.electric_dipole
         return gs_dip_moment - np.array([
             [product_trace(comp, ddm) for comp in dipole_integrals]

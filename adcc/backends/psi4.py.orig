@@ -124,9 +124,14 @@ class Psi4HFProvider(HartreeFockProvider):
 
     def pcm_energy(self, dm):
         psi_dm = psi4.core.Matrix.from_array(dm.to_ndarray())
+<<<<<<< HEAD
         # computes the Fock matrix contribution.
         # By contraction with the tdm, the electronic energy contribution is
         # calculated.
+=======
+        # computes the Fock matrix contribution
+        # By contraction with the tdm, the electronic contribution is obtained
+>>>>>>> qed_adc_only_vacuum_coupling
         V_pcm = psi4.core.PCM.compute_V(self.wfn.get_PCM(), psi_dm).to_array()
         return np.einsum("uv,uv->", dm.to_ndarray(), V_pcm)
 
