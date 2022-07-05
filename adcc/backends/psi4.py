@@ -172,10 +172,10 @@ class Psi4HFProvider(HartreeFockProvider):
         )
 
     def fill_orben_f(self, out):
-        #orben_a = np.asarray(self.wfn.epsilon_a())
-        #orben_b = np.asarray(self.wfn.epsilon_b())
-        orben_a = np.asarray(self.wfn.Fa()).diagonal()
-        orben_b = np.asarray(self.wfn.Fb()).diagonal()
+        orben_a = np.asarray(self.wfn.epsilon_a())
+        orben_b = np.asarray(self.wfn.epsilon_b())
+        #orben_a = np.asarray(self.wfn.Fa()).diagonal()
+        #orben_b = np.asarray(self.wfn.Fb()).diagonal()
         out[:] = np.hstack((orben_a, orben_b))
 
     def fill_occupation_f(self, out):

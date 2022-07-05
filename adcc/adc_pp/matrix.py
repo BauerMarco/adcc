@@ -199,8 +199,13 @@ def block_ph_gs_0_phot(hf, mp, intermediates):
 def block_ph_gs_0(hf, mp, intermediates):
     return AdcBlock(lambda ampl: 0, 0)
 
-block_ph_gs_0_couple = block_ph_gs_0_phot_couple = block_ph_gs_0_phot = block_ph_gs_0
+block_ph_gs_0_couple = block_ph_gs_0_phot_couple = block_ph_gs_0
 
+def block_ph_gs_0_phot(hf, mp, intermediates):
+    omega = float(ReferenceState.get_qed_omega(hf))
+    def apply(ampl):
+        return omega * ampl.gs1
+    return AdcBlock(apply, omega)
 
 def block_pphh_gs_0(hf, mp, intermediates):
     return AdcBlock(lambda ampl:0, 0)
@@ -246,18 +251,17 @@ def block_ph_ph_0(hf, mp, intermediates):
         #np.insert(diagonal, 0, 0.)
         #diagonal = np.zeros(np.add(diagonal_.shape, np.array([0])))
         #diagonal[1:,1:] = diagonal_
-        print("new stuff works???")
         #print(diagonal)
 
         def apply(ampl):
-            mvprod = AmplitudeVector(ph=( #change to QED_AmplitudeVector
+            return AmplitudeVector(ph=( #change to QED_AmplitudeVector
                 + einsum("ib,ab->ia", ampl.ph, hf.fvv)
                 - einsum("IJ,Ja->Ia", fCC, ampl.ph)
             ))
             #np.insert(mvprod, 0, 0.)
             #mvprod = np.zeros(np.add(mv_prod_.shape, np.array([0])))
             #mvprod[1:,1:] = mvprod_
-            return mvprod 
+            
     else:
         diagonal = AmplitudeVector(ph=direct_sum("a-i->ia", hf.fvv.diagonal(),
                                                 fCC.diagonal()))
@@ -295,16 +299,14 @@ def block_ph_ph_0_phot(hf, mp, intermediates):
                                                 fCC.diagonal()))
 
         #np.insert(diagonal, 0, 0.)
-        print("new stuff works???")
         #print(diagonal)
 
         def apply(ampl):
-            mvprod = AmplitudeVector(ph=(
+            return AmplitudeVector(ph=(
                 + einsum("ib,ab->ia", ampl.ph1, hf.fvv)
                 - einsum("IJ,Ja->Ia", fCC, ampl.ph1)
             ))
             #np.insert(mvprod, 0, 0.)
-            return mvprod
     else:
         raise NotImplementedError("coupling needs to be given to reference wavefunction in input file for QED-ADC")
     return AdcBlock(apply, diagonal)
