@@ -332,27 +332,27 @@ std::shared_ptr<Symmetry> make_symmetry_triples(std::shared_ptr<const MoSpaces> 
 			const std::string& space) {
   auto sym = std::make_shared<Symmetry>(mospaces_ptr, space);
 
-  //const std::vector<std::string>& ss = sym->subspaces();
-  //const MoSpaces& mo		     = *mospaces_ptr;
+  const std::vector<std::string>& ss = sym->subspaces();
+  const MoSpaces& mo		     = *mospaces_ptr;
   if (sym->ndim() != 6) {
     throw invalid_argument("Expected exactly a six dimensional space string, not " +
 		                       space + ".");
   }
 
-  //std::vector<std::string> permutations{"ijklmn"};
-  //if (ss[0] == ss[1]) permutations.push_back("-jiklmn");
-  //if (ss[0] == ss[2]) permutations.push_back("-kjilmn");
-  //if (ss[1] == ss[2]) permutations.push_back("-ikjlmn");
-  //if (ss[0] == ss[1] && ss[0] == ss[2]) {
-  //  permutations.insert(permutations.end(), {"jkilmn", "kijlmn"});
-  //}
-  //if (ss[3] == ss[4]) permutations.push_back("-ijkmln");
-  //if (ss[3] == ss[5]) permutations.push_back("-ijknml");
-  //if (ss[4] == ss[5]) permutations.push_back("-ijklnm");
-  //if (ss[3] == ss[4] && ss[3] == ss[5]) {
-  //  permutations.insert(permutations.end(), {"ijknlm", "ijkmnl"});
-  //}
-  //if (permutations.size() > 1) sym->set_permutations(permutations);
+  std::vector<std::string> permutations{"ijklmn"};
+  if (ss[0] == ss[1]) permutations.push_back("-jiklmn");
+  if (ss[0] == ss[2]) permutations.push_back("-kjilmn");
+  if (ss[1] == ss[2]) permutations.push_back("-ikjlmn");
+  if (ss[0] == ss[1] && ss[0] == ss[2]) {
+    permutations.insert(permutations.end(), {"jkilmn", "kijlmn"});
+  }
+  if (ss[3] == ss[4]) permutations.push_back("-ijkmln");
+  if (ss[3] == ss[5]) permutations.push_back("-ijknml");
+  if (ss[4] == ss[5]) permutations.push_back("-ijklnm");
+  if (ss[3] == ss[4] && ss[3] == ss[5]) {
+    permutations.insert(permutations.end(), {"ijknlm", "ijkmnl"});
+  }
+  if (permutations.size() > 1) sym->set_permutations(permutations);
 
   // Set point-group symmetry: no idea what is correct here.
   //sym->set_irreps_allowed({mo.irrep_totsym()});
@@ -398,5 +398,6 @@ std::shared_ptr<Symmetry> make_symmetry_triples(std::shared_ptr<const MoSpaces> 
   return sym;
 }
 **/
+
 
 }  // namespace libadcc

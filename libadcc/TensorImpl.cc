@@ -711,9 +711,17 @@ std::shared_ptr<Tensor> TensorImpl<N>::direct_sum(std::shared_ptr<Tensor> other)
   IF_MATCHES_EXECUTE(1, 1)  //
   IF_MATCHES_EXECUTE(1, 2)  //
   IF_MATCHES_EXECUTE(1, 3)  //
+  IF_MATCHES_EXECUTE(1, 4)  //
+  IF_MATCHES_EXECUTE(1, 5)  //
   IF_MATCHES_EXECUTE(2, 1)  //
   IF_MATCHES_EXECUTE(2, 2)  //
-  IF_MATCHES_EXECUTE(3, 1)  //
+  IF_MATCHES_EXECUTE(2, 3)  //
+  IF_MATCHES_EXECUTE(2, 4)  //
+  IF_MATCHES_EXECUTE(3, 2)  //
+  IF_MATCHES_EXECUTE(3, 3)  //
+  IF_MATCHES_EXECUTE(4, 1)  //
+  IF_MATCHES_EXECUTE(4, 2)  //
+  IF_MATCHES_EXECUTE(5, 1)  //
 
   throw not_implemented_error(
         "Did not implement the case of a direct_sum of two tensors of dimension " +
@@ -1461,6 +1469,8 @@ std::shared_ptr<ExpressionTree> as_expression(const std::shared_ptr<Tensor>& ten
     ret = std::static_pointer_cast<TensorImpl<3>>(tensor)->expression_ptr();
   } else if (tensor->ndim() == 4) {
     ret = std::static_pointer_cast<TensorImpl<4>>(tensor)->expression_ptr();
+  } else if (tensor->ndim() == 6) {
+    ret = std::static_pointer_cast<TensorImpl<6>>(tensor)->expression_ptr();
   } else {
     throw not_implemented_error("Only implemented for dimensionality <= 4.");
   }
@@ -1520,6 +1530,8 @@ std::shared_ptr<Tensor> make_tensor(std::shared_ptr<Symmetry> symmetry) {
     return make_tensor_inner<3>(symmetry);
   } else if (symmetry->ndim() == 4) {
     return make_tensor_inner<4>(symmetry);
+  } else if (symmetry->ndim() == 6) {
+    return make_tensor_inner<6>(symmetry);
   } else {
     throw not_implemented_error("Only implemented for dimensionality <= 4.");
   }
@@ -1535,6 +1547,8 @@ std::shared_ptr<Tensor> make_tensor(std::shared_ptr<const AdcMemory> adcmem_ptr,
     return std::make_shared<TensorImpl<3>>(adcmem_ptr, axes);
   } else if (axes.size() == 4) {
     return std::make_shared<TensorImpl<4>>(adcmem_ptr, axes);
+  } else if (axes.size() == 6) {
+    return std::make_shared<TensorImpl<6>>(adcmem_ptr, axes);
   } else {
     throw not_implemented_error("Only implemented for dimensionality <= 4.");
   }
@@ -1556,8 +1570,8 @@ INSTANTIATE(1)
 INSTANTIATE(2)
 INSTANTIATE(3)
 INSTANTIATE(4)
-//INSTANTIATE(5)
-//INSTANTIATE(6)
+INSTANTIATE(5)
+INSTANTIATE(6)
 //INSTANTIATE(7)
 //INSTANTIATE(8)
 
