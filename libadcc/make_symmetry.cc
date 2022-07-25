@@ -333,7 +333,7 @@ std::shared_ptr<Symmetry> make_symmetry_triples(std::shared_ptr<const MoSpaces> 
   auto sym = std::make_shared<Symmetry>(mospaces_ptr, space);
 
   const std::vector<std::string>& ss = sym->subspaces();
-  const MoSpaces& mo		     = *mospaces_ptr;
+  //const MoSpaces& mo		     = *mospaces_ptr;
   if (sym->ndim() != 6) {
     throw invalid_argument("Expected exactly a six dimensional space string, not " +
 		                       space + ".");
@@ -354,7 +354,7 @@ std::shared_ptr<Symmetry> make_symmetry_triples(std::shared_ptr<const MoSpaces> 
   }
   if (permutations.size() > 1) sym->set_permutations(permutations);
 
-  // Set point-group symmetry: no idea what is correct here.
+  // Set point-group symmetry: no idea what is correct here. 
   //sym->set_irreps_allowed({mo.irrep_totsym()});
 
   // Set spin symmetry:
