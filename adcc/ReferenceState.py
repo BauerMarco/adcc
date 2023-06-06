@@ -224,5 +224,15 @@ class ReferenceState(libadcc.ReferenceState):
         # Notice the negative sign due to the negative charge of the electrons
         return self.nuclear_dipole - np.array([product_trace(comp, self.density)
                                                for comp in dipole_integrals])
+    
+    @cached_property
+    def electronic_angular_momentum(self):
+        """
+        Return the HF angular momentum of the reference state (that is the sum of
+        the electronic and the nuclear contribution.)
+        """
+        ang_mom_ints = self.operators.magnetic_dipole
+        # Notice the negative sign due to the negative charge of the electrons
+        return np.array([product_trace(comp, self.density) for comp in ang_mom_ints])
 
 # TODO some nice describe method

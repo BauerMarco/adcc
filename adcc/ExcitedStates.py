@@ -258,6 +258,23 @@ class ExcitedStates(ElectronicTransition):
             [product_trace(comp, ddm) for comp in dipole_integrals]
             for ddm in self.state_diffdm
         ])
+    
+    @cached_property
+    @mark_excitation_property()
+    @timed_member_call(timer="_property_timer")
+    def state_electronic_angular_momentum(self):
+        """List of state electronic angular momentums"""
+        pmethod = self.property_method
+        if pmethod.level == 0:
+            gs_el_ang_moment = self.reference_state.electronic_angular_momentum
+        else:
+            gs_el_ang_moment = self.ground_state.electronic_angular_momentum(pmethod.level)
+
+        el_ang_mom_integrals = self.operators.magnetic_dipole
+        return gs_el_ang_moment - np.array([
+            [product_trace(comp, ddm) for comp in el_ang_mom_integrals]
+            for ddm in self.state_diffdm
+        ])
 
     def describe(self, oscillator_strengths=True, rotatory_strengths=False,
                  state_dipole_moments=False, transition_dipole_moments=False,

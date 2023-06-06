@@ -194,6 +194,19 @@ class LazyMp:
         else:
             raise NotImplementedError("Only dipole moments for level 1 and 2"
                                       " are implemented.")
+        
+    def electronic_angular_momentum(self, level=2):
+        """
+        Return the MP el_ang_momentum at the specified level of
+        perturbation theory.
+        """
+        if level == 1:
+            return self.reference_state.electronic_angular_momentum
+        if level == 2:
+            return self.mp2_electronic_angular_momentum
+        else:
+            raise NotImplementedError("Only el_ang_moms for level 1 and 2"
+                                      " are implemented.")
 
     @cached_member_function
     def energy_correction(self, level=2):
@@ -273,6 +286,14 @@ class LazyMp:
         mp2corr = -np.array([product_trace(comp, self.mp2_diffdm)
                              for comp in dipole_integrals])
         return refstate.dipole_moment + mp2corr
+    
+    @cached_property
+    def mp2_electronic_angular_momentum(self):
+        refstate = self.reference_state
+        ang_mom_ints = refstate.operators.magnetic_dipole
+        mp2corr = -np.array([product_trace(comp, self.mp2_diffdm)
+                             for comp in ang_mom_ints])
+        return refstate.electronic_angular_momentum + mp2corr
 
 
 #
